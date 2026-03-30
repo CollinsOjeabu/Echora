@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Echora — Turn Your Research Into Original Thought</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #070E09;
+  --surface: #0D1610;
+  --elevated: #152219;
+  --border: #1E2E22;
+  --ember: #FF6B35;
+  --ember-muted: rgba(255,107,53,0.10);
+  --cream: #EDE8E0;
+  --cream-muted: rgba(237,232,224,0.45);
+  --cream-faint: rgba(237,232,224,0.12);
+  --success: #1D9E75;
+  --warning: #EF9F27;
+  --info: #378ADD;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--void);
+  color: var(--cream);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%); z-index: 100;
+  width: calc(100% - 48px); max-width: 960px;
+  background: rgba(7,14,9,0.85);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 0.5px solid rgba(237,232,224,0.1);
+  border-radius: 100px; padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.nav-mark {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--ember); display: flex; align-items: center; justify-content: center;
+}
+.nav-mark svg { width: 12px; height: 12px; }
+.nav-wordmark { font-size: 12px; font-weight: 700; color: var(--cream); letter-spacing: 0.07em; }
+.nav-links { display: flex; gap: 24px; }
+.nav-links a { font-size: 13px; color: var(--cream-muted); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover { color: var(--cream); }
+.nav-cta {
+  font-size: 12px; font-weight: 600;
+  background: var(--ember); color: #fff;
+  padding: 7px 18px; border-radius: 100px;
+  border: none; cursor: pointer; text-decoration: none;
+  transition: opacity 0.2s;
+}
+.nav-cta:hover { opacity: 0.85; }
+
+/* ── BUTTONS ── */
+.btn-primary {
+  font-size: 14px; font-weight: 600;
+  background: var(--ember); color: #fff;
+  padding: 13px 28px; border-radius: 100px;
+  border: none; cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-ghost {
+  font-size: 14px; background: transparent; color: var(--cream-muted);
+  padding: 13px 24px; border-radius: 100px;
+  border: 1px solid rgba(237,232,224,0.12); cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-ghost:hover { border-color: rgba(237,232,224,0.25); color: var(--cream); }
+
+/* ── SECTION BASE ── */
+section { padding: 140px 24px; position: relative; }
+.container { max-width: 1100px; margin: 0 auto; }
+.section-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: rgba(237,232,224,0.18); margin-bottom: 48px;
+}
+
+/* ── REVEAL ── */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+/* ═══════════════════════════════════
+   01 — HERO
+═══════════════════════════════════ */
+#hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 120px 24px 80px;
+  position: relative; overflow: hidden;
+}
+.hero-ambient {
+  position: absolute; top: -100px; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 500px;
+  background: radial-gradient(ellipse, rgba(255,107,53,0.06) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(255,107,53,0.08); border: 0.5px solid rgba(255,107,53,0.2);
+  border-radius: 100px; padding: 5px 16px;
+  font-size: 12px; color: var(--ember); margin-bottom: 28px;
+  animation: fadeUp 0.8s ease both;
+}
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.hero-headline {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(48px, 7.5vw, 84px); font-weight: 400;
+  color: var(--cream); text-align: center;
+  line-height: 1.03; letter-spacing: -0.03em; margin-bottom: 20px;
+  animation: fadeUp 0.8s 0.1s ease both;
+}
+.hero-headline em { color: var(--ember); font-style: italic; }
+.hero-sub {
+  font-size: 17px; color: var(--cream-muted);
+  text-align: center; max-width: 540px; line-height: 1.7;
+  margin-bottom: 36px; animation: fadeUp 0.8s 0.2s ease both;
+}
+.hero-btns { display: flex; gap: 12px; margin-bottom: 16px; animation: fadeUp 0.8s 0.3s ease both; }
+.hero-social { font-size: 12px; color: rgba(237,232,224,0.2); margin-bottom: 52px; animation: fadeUp 0.8s 0.35s ease both; }
+
+/* Card stack */
+.card-stack {
+  position: relative; width: min(520px, 90vw); height: 220px;
+  animation: fadeUp 0.8s 0.45s ease both;
+}
+.stack-card {
+  position: absolute; left: 50%;
+  width: min(520px, 90vw);
+  border-radius: 14px; padding: 20px 22px;
+  border: 0.5px solid rgba(237,232,224,0.07);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.sc-3 { background: rgba(9,15,10,0.45); top: 26px; transform: translateX(-50%) rotate(-4deg); z-index: 1; height: 170px; border-color: rgba(237,232,224,0.04); }
+.sc-2 { background: rgba(12,20,14,0.6); top: 13px; transform: translateX(-50%) rotate(-2deg); z-index: 2; height: 178px; border-color: rgba(237,232,224,0.05); }
+.sc-1 { background: var(--elevated); top: 0; transform: translateX(-50%); z-index: 3; border-color: rgba(255,107,53,0.15); }
+.sc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.sc-badge-pill { font-size: 10px; font-weight: 500; background: var(--ember-muted); color: var(--ember); padding: 3px 10px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; }
+.sc-match { font-size: 11px; color: var(--ember); font-family: 'JetBrains Mono', monospace; }
+.sc-post { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 13px; color: rgba(237,232,224,0.8); line-height: 1.6; margin-bottom: 14px; }
+.sc-bars { display: flex; flex-direction: column; gap: 6px; }
+.sc-bar-row { display: flex; align-items: center; gap: 8px; }
+.sc-bar-lbl { font-size: 10px; color: rgba(237,232,224,0.3); width: 80px; flex-shrink: 0; }
+.sc-bar-track { flex: 1; height: 2px; background: rgba(237,232,224,0.05); border-radius: 100px; overflow: hidden; }
+.sc-bar-fill { height: 100%; border-radius: 100px; background: var(--ember); }
+.sc-bar-pct { font-size: 10px; color: rgba(255,107,53,0.7); font-family: 'JetBrains Mono', monospace; width: 28px; text-align: right; }
+.card-content { transition: opacity 0.4s ease; }
+
+/* Source pills on card */
+.sc-sources { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.sc-source-pill { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: rgba(237,232,224,0.4); background: rgba(237,232,224,0.04); border: 0.5px solid rgba(237,232,224,0.1); border-radius: 4px; padding: 2px 7px; }
+
+/* ═══════════════════════════════════
+   02 — PROBLEM
+═══════════════════════════════════ */
+#problem { background: var(--void); }
+#problem .container { max-width: 740px; }
+.problem-lead {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(36px, 5vw, 52px); font-weight: 400;
+  color: var(--cream); line-height: 1.1; letter-spacing: -0.025em; margin-bottom: 32px;
+}
+.problem-body { font-size: 17px; color: var(--cream-muted); line-height: 1.8; margin-bottom: 22px; }
+.problem-highlight {
+  background: rgba(255,107,53,0.06); border-left: 2px solid var(--ember);
+  border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 28px 0;
+  font-size: 16px; color: var(--cream-muted); line-height: 1.75;
+}
+.problem-highlight strong { color: var(--cream); font-weight: 500; }
+.problem-close {
+  font-family: 'DM Serif Display', serif; font-style: italic;
+  font-size: clamp(26px, 3.5vw, 36px); color: var(--ember);
+  letter-spacing: -0.02em; line-height: 1.25; margin-top: 48px;
+}
+
+/* ═══════════════════════════════════
+   03 — HOW IT WORKS (Synthesis Loop)
+═══════════════════════════════════ */
+#hiw { background: var(--surface); }
+.hiw-header { text-align: center; margin-bottom: 80px; }
+.hiw-header h2 { font-family: 'DM Serif Display', serif; font-size: clamp(34px, 5vw, 50px); font-weight: 400; letter-spacing: -0.025em; margin-bottom: 12px; }
+.hiw-header p { font-size: 16px; color: var(--cream-muted); }
+
+.hiw-steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+.hiw-step {
+  padding: 28px 20px; background: var(--void);
+  border: 0.5px solid var(--border); position: relative;
+  transition: border-color 0.2s;
+}
+.hiw-step:hover { border-color: rgba(255,107,53,0.3); }
+.hiw-step:first-child { border-radius: 12px 0 0 12px; }
+.hiw-step:last-child { border-radius: 0 12px 12px 0; }
+.hiw-step.featured { background: rgba(255,107,53,0.04); border-color: rgba(255,107,53,0.2); }
+.step-num { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(237,232,224,0.2); margin-bottom: 16px; }
+.step-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--ember-muted); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.step-icon svg { width: 16px; height: 16px; }
+.step-icon.featured-icon { background: rgba(255,107,53,0.18); }
+.hiw-step h3 { font-size: 14px; font-weight: 600; color: var(--cream); margin-bottom: 8px; }
+.hiw-step p { font-size: 12px; color: var(--cream-muted); line-height: 1.65; }
+.hiw-connector { position: absolute; top: 50%; right: -1px; transform: translateY(-50%); width: 22px; height: 22px; background: var(--ember); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2; }
+.hiw-connector svg { width: 9px; height: 9px; }
+.hiw-bottom { text-align: center; margin-top: 56px; font-family: 'DM Serif Display', serif; font-style: italic; font-size: 26px; color: var(--ember); }
+
+/* ═══════════════════════════════════
+   04 — CANVAS MOMENT (key differentiator)
+═══════════════════════════════════ */
+#canvas-section { background: var(--void); }
+.canvas-header { text-align: center; margin-bottom: 64px; }
+.canvas-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ember); letter-spacing: 0.1em; margin-bottom: 12px; }
+.canvas-header h2 { font-family: 'DM Serif Display', serif; font-size: clamp(34px, 5vw, 50px); font-weight: 400; letter-spacing: -0.025em; margin-bottom: 14px; }
+.canvas-header p { font-size: 16px; color: var(--cream-muted); max-width: 500px; margin: 0 auto; line-height: 1.7; }
+
+/* Canvas UI mockup */
+.canvas-mockup {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+  transform: perspective(1800px) rotateX(2deg);
+  transform-origin: center bottom;
+  transition: transform 0.6s ease;
+  max-width: 1100px; margin: 0 auto;
+}
+.canvas-mockup:hover { transform: perspective(1800px) rotateX(0deg); }
+
+.canvas-chrome {
+  background: #0A1310; padding: 10px 16px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 0.5px solid var(--border);
+}
+.canvas-dots { display: flex; gap: 6px; }
+.canvas-dot { width: 10px; height: 10px; border-radius: 50%; }
+.canvas-url { flex: 1; background: rgba(237,232,224,0.04); border: 0.5px solid rgba(237,232,224,0.08); border-radius: 6px; padding: 4px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(237,232,224,0.25); text-align: center; }
+
+.canvas-body { display: grid; grid-template-columns: 220px 1fr 260px; height: 480px; }
+
+/* Canvas sidebar */
+.canvas-sidebar {
+  background: #070E09; border-right: 0.5px solid var(--border);
+  padding: 18px 0; display: flex; flex-direction: column;
+}
+.sidebar-brand { padding: 0 18px 18px; border-bottom: 0.5px solid var(--border); margin-bottom: 14px; }
+.sidebar-brand-name { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--ember); font-style: italic; }
+.sidebar-brand-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(237,232,224,0.2); letter-spacing: 0.1em; text-transform: uppercase; }
+.sidebar-nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 18px; font-size: 12px; color: var(--cream-muted); }
+.sidebar-nav-item.active { background: rgba(255,107,53,0.08); color: var(--ember); border-right: 2px solid var(--ember); }
+.sidebar-nav-item svg { width: 13px; height: 13px; flex-shrink: 0; }
+.sidebar-section-label { padding: 12px 18px 6px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(237,232,224,0.2); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Saved items in sidebar */
+.saved-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 18px; cursor: default; }
+.saved-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.saved-item-text { font-size: 11px; color: rgba(237,232,224,0.45); line-height: 1.4; }
+.saved-item-type { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(237,232,224,0.2); margin-top: 2px; }
+.sidebar-add-btn { margin: auto 14px 14px; background: var(--ember); color: #fff; border: none; border-radius: 8px; padding: 9px; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
+
+/* Canvas area */
+.canvas-area { background: #070E09; position: relative; overflow: hidden; }
+.canvas-topbar { position: absolute; top: 0; left: 0; right: 0; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid rgba(30,46,34,0.5); background: rgba(7,14,9,0.9); z-index: 2; }
+.canvas-title { font-size: 12px; font-weight: 500; color: var(--cream); }
+.canvas-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(237,232,224,0.25); }
+.canvas-tools { display: flex; gap: 5px; }
+.canvas-tool { width: 26px; height: 26px; border-radius: 5px; background: rgba(237,232,224,0.04); border: 0.5px solid rgba(237,232,224,0.08); display: flex; align-items: center; justify-content: center; font-size: 10px; color: rgba(237,232,224,0.3); }
+
+/* SVG canvas content */
+.canvas-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* Bottom bar */
+.canvas-bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; border-top: 0.5px solid rgba(30,46,34,0.5); background: rgba(7,14,9,0.9); }
+.canvas-count { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(237,232,224,0.2); }
+.canvas-synthesise-btn { background: var(--ember); color: #fff; border: none; border-radius: 6px; padding: 5px 14px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+
+/* Right panel — synthesis output */
+.canvas-panel { background: #080F0A; border-left: 0.5px solid var(--border); padding: 18px; overflow-y: auto; }
+.panel-section { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: rgba(237,232,224,0.25); text-transform: uppercase; margin-bottom: 10px; }
+.panel-synthesis-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.panel-synthesis-badge { font-size: 10px; background: rgba(29,158,117,0.1); color: var(--success); border: 0.5px solid rgba(29,158,117,0.2); border-radius: 6px; padding: 2px 8px; font-family: 'JetBrains Mono', monospace; }
+.panel-connections { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.panel-connection { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--cream-muted); padding: 7px 10px; background: rgba(237,232,224,0.03); border-radius: 6px; border: 0.5px solid rgba(237,232,224,0.06); }
+.panel-conn-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.panel-insight { background: rgba(255,107,53,0.05); border: 0.5px solid rgba(255,107,53,0.15); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.panel-insight-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(255,107,53,0.5); letter-spacing: 0.08em; margin-bottom: 7px; }
+.panel-insight-text { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 12px; color: rgba(237,232,224,0.75); line-height: 1.6; }
+.panel-generate-btn { width: 100%; padding: 10px; background: var(--ember); color: #fff; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; margin-bottom: 6px; }
+.panel-platform-row { display: flex; gap: 6px; }
+.panel-platform-btn { flex: 1; padding: 7px; background: transparent; border: 0.5px solid rgba(237,232,224,0.1); border-radius: 6px; font-size: 11px; color: var(--cream-muted); cursor: pointer; text-align: center; }
+
+/* ═══════════════════════════════════
+   05 — FEATURES BENTO
+═══════════════════════════════════ */
+#features { background: var(--surface); }
+.features-header { text-align: center; margin-bottom: 60px; }
+.features-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ember); letter-spacing: 0.1em; margin-bottom: 12px; }
+.features-header h2 { font-family: 'DM Serif Display', serif; font-size: clamp(34px, 5vw, 50px); font-weight: 400; letter-spacing: -0.025em; }
+
+.bento-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.bento-tile {
+  background: var(--void); border: 0.5px solid var(--border);
+  border-radius: 14px; padding: 24px;
+  transition: border-color 0.2s, transform 0.2s;
+  position: relative; overflow: hidden;
+}
+.bento-tile:hover { border-color: rgba(255,107,53,0.25); transform: translateY(-2px); }
+.bento-tile.span2 { grid-column: span 2; }
+.tile-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--ember-muted); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+.tile-icon svg { width: 16px; height: 16px; }
+.tile-big-num { font-family: 'DM Serif Display', serif; font-size: 50px; font-weight: 400; color: var(--cream); line-height: 1; margin-bottom: 8px; }
+.tile-big-num span { color: var(--ember); }
+.bento-tile h3 { font-size: 15px; font-weight: 600; color: var(--cream); margin-bottom: 8px; }
+.bento-tile p { font-size: 13px; color: var(--cream-muted); line-height: 1.6; }
+.tile-badge { position: absolute; top: 18px; right: 18px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ember); background: var(--ember-muted); padding: 2px 8px; border-radius: 20px; }
+.tile-bars { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.tile-bar-row { display: flex; align-items: center; gap: 10px; }
+.tile-bar-lbl { font-size: 11px; color: var(--cream-muted); width: 90px; flex-shrink: 0; }
+.tile-bar-track { flex: 1; height: 3px; background: rgba(237,232,224,0.06); border-radius: 100px; }
+.tile-bar-fill { height: 100%; border-radius: 100px; background: var(--ember); }
+.tile-bar-pct { font-size: 10px; color: var(--ember); font-family: 'JetBrains Mono', monospace; width: 30px; text-align: right; }
+.tile-avatars { display: flex; margin-bottom: 12px; }
+.tile-av { width: 28px; height: 28px; border-radius: 50%; background: var(--elevated); border: 2px solid var(--void); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--cream); margin-left: -6px; }
+.tile-av:first-child { margin-left: 0; }
+.tile-av.ember { background: var(--ember); color: #fff; }
+
+/* Mini calendar tile */
+.mini-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 12px; }
+.cal-day { height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-family: 'JetBrains Mono', monospace; color: rgba(237,232,224,0.3); }
+.cal-day.has-post { background: var(--ember-muted); color: var(--ember); }
+.cal-day.today { background: var(--ember); color: #fff; }
+.cal-day.header { color: rgba(237,232,224,0.2); background: transparent; font-size: 8px; }
+
+/* Mini analytics */
+.mini-chart { display: flex; align-items: flex-end; gap: 3px; height: 48px; margin-top: 12px; }
+.chart-bar { flex: 1; background: rgba(255,107,53,0.15); border-radius: 2px 2px 0 0; transition: background 0.2s; }
+.chart-bar:hover { background: rgba(255,107,53,0.4); }
+.chart-bar.peak { background: var(--ember); }
+
+/* ═══════════════════════════════════
+   06 — KNOWLEDGE GRAPH
+═══════════════════════════════════ */
+#knowledge { background: var(--void); }
+.kg-header { text-align: center; margin-bottom: 64px; }
+.kg-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ember); letter-spacing: 0.1em; margin-bottom: 12px; }
+.kg-header h2 { font-family: 'DM Serif Display', serif; font-size: clamp(34px, 5vw, 50px); font-weight: 400; letter-spacing: -0.025em; margin-bottom: 14px; }
+.kg-header p { font-size: 16px; color: var(--cream-muted); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+
+.kg-browser {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.6);
+  transform: perspective(1800px) rotateX(3deg);
+  transform-origin: center bottom; transition: transform 0.6s ease;
+  max-width: 1100px; margin: 0 auto;
+}
+.kg-browser:hover { transform: perspective(1800px) rotateX(0deg); }
+.kg-chrome { background: #0A1310; padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 0.5px solid var(--border); }
+.kg-dots { display: flex; gap: 6px; }
+.kg-dot { width: 10px; height: 10px; border-radius: 50%; }
+.kg-url { flex: 1; background: rgba(237,232,224,0.04); border: 0.5px solid rgba(237,232,224,0.08); border-radius: 6px; padding: 4px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(237,232,224,0.25); text-align: center; }
+.kg-status { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--success); }
+.kg-dashboard { display: grid; grid-template-columns: 220px 1fr 280px; height: 520px; }
+.kg-sidebar { background: #070E09; border-right: 0.5px solid var(--border); padding: 18px 0; display: flex; flex-direction: column; }
+.kg-brand { padding: 0 18px 18px; border-bottom: 0.5px solid var(--border); margin-bottom: 14px; }
+.kg-brand-name { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--ember); font-style: italic; }
+.kg-brand-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: rgba(237,232,224,0.2); letter-spacing: 0.1em; text-transform: uppercase; }
+.kg-nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 18px; font-size: 12px; color: var(--cream-muted); }
+.kg-nav-item.active { background: rgba(255,107,53,0.08); color: var(--ember); border-right: 2px solid var(--ember); }
+.kg-nav-item svg { width: 13px; height: 13px; flex-shrink: 0; }
+.kg-new-node { margin: auto 14px 14px; background: var(--ember); color: #fff; border: none; border-radius: 8px; padding: 9px; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
+.kg-canvas { background: #070E09; position: relative; overflow: hidden; }
+.kg-topbar { position: absolute; top: 0; left: 0; right: 0; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid rgba(30,46,34,0.5); background: rgba(7,14,9,0.9); z-index: 2; }
+.kg-system-status { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(237,232,224,0.3); }
+.kg-system-status span { color: var(--success); }
+.kg-search { background: rgba(237,232,224,0.04); border: 0.5px solid rgba(237,232,224,0.08); border-radius: 6px; padding: 5px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(237,232,224,0.2); display: flex; align-items: center; gap: 6px; }
+.kg-tools { display: flex; gap: 5px; }
+.kg-tool-btn { width: 26px; height: 26px; border-radius: 5px; background: rgba(237,232,224,0.04); border: 0.5px solid rgba(237,232,224,0.08); display: flex; align-items: center; justify-content: center; color: rgba(237,232,224,0.3); font-size: 11px; }
+.kg-graph-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.kg-edge-fade { position: absolute; left: 0; right: 0; height: 70px; pointer-events: none; z-index: 1; }
+.kg-edge-fade.top { top: 40px; background: linear-gradient(to bottom, #070E09, transparent); }
+.kg-edge-fade.bottom { bottom: 30px; background: linear-gradient(to top, #070E09, transparent); }
+.kg-bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; border-top: 0.5px solid rgba(30,46,34,0.5); background: rgba(7,14,9,0.9); font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(237,232,224,0.2); }
+.kg-selection-pill { background: rgba(255,107,53,0.1); border: 0.5px solid rgba(255,107,53,0.25); border-radius: 100px; padding: 3px 12px; font-size: 10px; color: var(--ember); font-family: 'JetBrains Mono', monospace; }
+.kg-panel { background: #080F0A; border-left: 0.5px solid var(--border); padding: 18px; overflow-y: auto; }
+.kg-panel-badge { display: inline-flex; background: rgba(255,107,53,0.1); border: 0.5px solid rgba(255,107,53,0.25); border-radius: 6px; padding: 3px 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ember); margin-bottom: 12px; }
+.kg-panel-saved { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(237,232,224,0.2); float: right; }
+.kg-node-title { font-size: 15px; font-weight: 600; color: var(--cream); margin-bottom: 4px; line-height: 1.3; }
+.kg-node-domain { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(237,232,224,0.2); margin-bottom: 18px; }
+.kg-panel-section { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.1em; color: rgba(237,232,224,0.25); text-transform: uppercase; margin-bottom: 8px; margin-top: 18px; }
+.kg-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
+.kg-tag { font-size: 11px; color: var(--cream-muted); background: rgba(237,232,224,0.05); border: 0.5px solid rgba(237,232,224,0.1); border-radius: 6px; padding: 3px 9px; }
+.kg-connection { display: flex; align-items: center; gap: 7px; padding: 9px 10px; border: 0.5px solid rgba(237,232,224,0.07); border-radius: 7px; margin-bottom: 5px; cursor: default; transition: border-color 0.15s; }
+.kg-connection:hover { border-color: rgba(255,107,53,0.2); }
+.kg-conn-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.kg-conn-label { font-size: 11px; color: var(--cream-muted); flex: 1; }
+.kg-conn-arrow { font-size: 11px; color: rgba(237,232,224,0.2); }
+.kg-select-btn { width: 100%; margin-top: 18px; padding: 10px; background: rgba(237,232,224,0.06); border: 0.5px solid rgba(237,232,224,0.1); border-radius: 8px; color: var(--cream); font-size: 12px; font-weight: 500; cursor: pointer; }
+.kg-select-hint { text-align: center; font-size: 10px; color: rgba(237,232,224,0.2); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+.kg-caption { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 28px; flex-wrap: wrap; }
+.kg-caption-item { display: flex; align-items: center; gap: 7px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(237,232,224,0.3); }
+.kg-caption-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ═══════════════════════════════════
+   07 — TESTIMONIALS
+═══════════════════════════════════ */
+#testimonials { background: var(--surface); overflow: hidden; padding: 120px 0; }
+.testimonials-header { text-align: center; margin-bottom: 56px; padding: 0 24px; }
+.testimonials-header h2 { font-family: 'DM Serif Display', serif; font-size: clamp(34px, 5vw, 50px); font-weight: 400; letter-spacing: -0.025em; }
+.marquee-wrap { display: flex; flex-direction: column; gap: 14px; }
+.marquee-row { display: flex; gap: 14px; overflow: hidden; }
+.marquee-track { display: flex; gap: 14px; animation: marquee 30s linear infinite; flex-shrink: 0; }
+.marquee-row:nth-child(2) .marquee-track { animation-direction: reverse; animation-duration: 36s; }
+@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.testimonial-card { background: var(--void); border: 0.5px solid var(--border); border-radius: 14px; padding: 20px 22px; width: 340px; flex-shrink: 0; }
+.tcard-quote-mark { font-family: 'DM Serif Display', serif; font-size: 44px; color: rgba(255,107,53,0.2); line-height: 0.5; margin-bottom: 12px; display: block; }
+.tcard-text { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 14px; color: var(--cream); line-height: 1.65; margin-bottom: 16px; }
+.tcard-divider { border: none; border-top: 0.5px solid var(--border); margin-bottom: 12px; }
+.tcard-author { display: flex; align-items: center; gap: 9px; }
+.tcard-av { width: 30px; height: 30px; border-radius: 50%; background: var(--elevated); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--cream); flex-shrink: 0; }
+.tcard-name { font-size: 12px; font-weight: 500; color: var(--cream); }
+.tcard-role { font-size: 11px; color: var(--cream-muted); }
+.tcard-match { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--ember); background: var(--ember-muted); padding: 2px 7px; border-radius: 20px; flex-shrink: 0; }
+
+/* ═══════════════════════════════════
+   08 — STATS
+═══════════════════════════════════ */
+#stats { background: var(--void); padding: 100px 24px; border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
+.stats-row { display: flex; justify-content: center; }
+.stat-item { flex: 1; max-width: 260px; text-align: center; padding: 0 32px; }
+.stat-item + .stat-item { border-left: 0.5px solid var(--border); }
+.stat-num { font-family: 'DM Serif Display', serif; font-size: clamp(48px, 7vw, 72px); font-weight: 400; color: var(--cream); letter-spacing: -0.03em; line-height: 1; margin-bottom: 8px; }
+.stat-num span { color: var(--ember); }
+.stat-label { font-size: 13px; color: var(--cream-muted); }
+
+/* ═══════════════════════════════════
+   09 — PRICING
+═══════════════════════════════════ */
+#pricing { background: var(--surface); }
+.pricing-header { text-align: center; margin-bottom: 60px; }
+.pricing-header h2 { font-family: 'DM Serif Display', serif; font-size: clamp(34px, 5vw, 50px); font-weight: 400; letter-spacing: -0.025em; margin-bottom: 12px; }
+.pricing-header p { font-size: 16px; color: var(--cream-muted); }
+.pricing-grid { display: grid; grid-template-columns: 1fr 1.4fr 1fr; gap: 12px; align-items: start; }
+.pricing-card { background: var(--void); border: 0.5px solid var(--border); border-radius: 16px; padding: 30px 26px; transition: transform 0.2s; }
+.pricing-card:hover { transform: translateY(-3px); }
+.pricing-card.featured { background: var(--elevated); border: 1.5px solid var(--ember); position: relative; }
+.popular-tag { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--ember); color: #fff; font-size: 10px; font-weight: 600; padding: 3px 14px; border-radius: 100px; white-space: nowrap; }
+.pricing-tier { font-size: 13px; font-weight: 600; color: var(--cream); margin-bottom: 6px; }
+.pricing-price { font-family: 'DM Serif Display', serif; font-size: 48px; font-weight: 400; color: var(--cream); letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px; }
+.pricing-price .currency { font-size: 22px; vertical-align: top; margin-top: 9px; display: inline-block; }
+.pricing-period { font-size: 12px; color: var(--cream-muted); margin-bottom: 22px; }
+.pricing-cta { width: 100%; padding: 11px; border-radius: 100px; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 22px; transition: opacity 0.15s; border: none; }
+.pricing-cta:hover { opacity: 0.85; }
+.cta-solid { background: var(--ember); color: #fff; }
+.cta-outline { background: transparent; border: 1px solid var(--border) !important; color: var(--cream); }
+.pricing-divider { border: none; border-top: 0.5px solid var(--border); margin-bottom: 18px; }
+.pricing-features { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.pricing-features li { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: var(--cream-muted); line-height: 1.5; }
+.feat-check { color: var(--success); flex-shrink: 0; font-size: 12px; }
+.feat-dash { color: var(--border); flex-shrink: 0; }
+.pricing-note { text-align: center; margin-top: 24px; font-size: 12px; color: rgba(237,232,224,0.2); }
+
+/* ═══════════════════════════════════
+   10 — CTA
+═══════════════════════════════════ */
+#cta { background: var(--surface); padding: 160px 24px; text-align: center; position: relative; overflow: hidden; }
+#cta canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.4; }
+.cta-content { position: relative; z-index: 2; }
+.cta-overline { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(237,232,224,0.25); letter-spacing: 0.06em; margin-bottom: 28px; }
+.cta-headline { font-family: 'DM Serif Display', serif; font-size: clamp(44px, 7vw, 76px); font-weight: 400; color: var(--cream); letter-spacing: -0.03em; line-height: 1.02; margin-bottom: 12px; }
+.cta-sub { font-family: 'DM Serif Display', serif; font-style: italic; font-size: clamp(34px, 5vw, 60px); color: var(--ember); letter-spacing: -0.025em; line-height: 1.05; margin-bottom: 36px; }
+.cta-social { font-size: 13px; color: rgba(237,232,224,0.2); margin-top: 16px; }
+
+/* ═══════════════════════════════════
+   FOOTER
+═══════════════════════════════════ */
+footer { background: var(--void); border-top: 0.5px solid var(--border); padding: 60px 24px 36px; }
+.footer-top { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 40px; max-width: 1100px; margin: 0 auto; padding-bottom: 44px; border-bottom: 0.5px solid var(--border); margin-bottom: 28px; }
+.footer-brand .logo-row { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+.footer-brand p { font-size: 13px; color: var(--cream-muted); line-height: 1.7; max-width: 200px; }
+.footer-tagline { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 17px; color: var(--ember); margin-top: 18px; }
+.footer-col h4 { font-size: 10px; font-weight: 600; color: rgba(237,232,224,0.3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.footer-col a { font-size: 13px; color: var(--cream-muted); text-decoration: none; transition: color 0.2s; display: inline-block; position: relative; }
+.footer-col a::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 0; height: 1px; background: var(--ember); transition: width 0.2s; }
+.footer-col a:hover { color: var(--cream); }
+.footer-col a:hover::after { width: 100%; }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto; }
+.footer-bottom p { font-size: 12px; color: rgba(237,232,224,0.2); }
+.footer-bottom-right { font-size: 12px; color: rgba(237,232,224,0.2); font-family: 'JetBrains Mono', monospace; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .canvas-body { grid-template-columns: 1fr; }
+  .canvas-sidebar, .canvas-panel { display: none; }
+  .kg-dashboard { grid-template-columns: 1fr; }
+  .kg-sidebar, .kg-panel { display: none; }
+  .bento-grid { grid-template-columns: 1fr 1fr; }
+  .bento-tile.span2 { grid-column: span 2; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .hiw-steps { grid-template-columns: 1fr 1fr; }
+  .hiw-step:first-child { border-radius: 12px 0 0 0; }
+  .hiw-step:last-child { border-radius: 0 0 12px 0; }
+  .hiw-connector { display: none; }
+}
+@media (max-width: 640px) {
+  nav { width: calc(100% - 24px); }
+  .nav-links { display: none; }
+  .bento-grid { grid-template-columns: 1fr; }
+  .bento-tile.span2 { grid-column: span 1; }
+  .hero-btns { flex-direction: column; align-items: center; }
+  .stats-row { flex-direction: column; align-items: center; gap: 36px; }
+  .stat-item + .stat-item { border-left: none; border-top: 0.5px solid var(--border); padding-top: 36px; }
+  .footer-top { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-mark">
+      <svg viewBox="0 0 12 12" fill="none">
+        <path d="M4 10 C4 6 6 3 10 2" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.5"/>
+        <path d="M6 10 C6 7 7.5 5 10 4" stroke="#FF6B35" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <line x1="5" y1="1.5" x2="7.5" y2="11" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="nav-wordmark">ECHORA</span>
+  </a>
+  <div class="nav-links">
+    <a href="#canvas-section">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#">Agents</a>
+  </div>
+  <a href="#" class="nav-cta">Start for free</a>
+</nav>
+
+<!-- ═══ 01 — HERO ═══ -->
+<section id="hero">
+  <div class="hero-ambient"></div>
+  <div class="hero-badge"><div class="badge-dot"></div>Now in early access</div>
+  <h1 class="hero-headline">Save. Connect.<br><em>Publish original.</em></h1>
+  <p class="hero-sub">Echora turns the content you already consume into original thought leadership — by synthesising your saved research into posts that sound exactly like you.</p>
+  <div class="hero-btns">
+    <button class="btn-primary">Start synthesising for free →</button>
+    <button class="btn-ghost">See how it works</button>
+  </div>
+  <p class="hero-social">Joined by 847 creators already turning research into content</p>
+
+  <div class="card-stack" id="cardStack">
+    <div class="stack-card sc-3"></div>
+    <div class="stack-card sc-2"></div>
+    <div class="stack-card sc-1">
+      <div class="card-content" id="cardContent">
+        <div class="sc-top">
+          <span class="sc-badge-pill" id="cardBadge">Synthesis · 4 sources</span>
+          <span class="sc-match" id="cardMatch">94% voice match</span>
+        </div>
+        <p class="sc-post" id="cardPost">"73% of creators saw engagement drop after switching to generic AI. The algorithm didn't change. Their connection to real research did..."</p>
+        <div id="cardBars" class="sc-bars">
+          <div class="sc-bar-row"><span class="sc-bar-lbl">Sources used</span><div class="sc-bar-track"><div class="sc-bar-fill" style="width:100%"></div></div><span class="sc-bar-pct">4/4</span></div>
+          <div class="sc-bar-row"><span class="sc-bar-lbl">Voice match</span><div class="sc-bar-track"><div class="sc-bar-fill" style="width:94%"></div></div><span class="sc-bar-pct">94%</span></div>
+          <div class="sc-bar-row"><span class="sc-bar-lbl">Original ideas</span><div class="sc-bar-track"><div class="sc-bar-fill" style="width:88%"></div></div><span class="sc-bar-pct">3 found</span></div>
+        </div>
+        <div class="sc-sources" id="cardSources">
+          <span class="sc-source-pill">AI Authenticity Study</span>
+          <span class="sc-source-pill">LinkedIn Algo 2026</span>
+          <span class="sc-source-pill">Creator Economy Report</span>
+          <span class="sc-source-pill">+1 more</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 02 — PROBLEM ═══ -->
+<section id="problem">
+  <div class="container">
+    <div class="section-num reveal">(01) — The real problem</div>
+    <h2 class="problem-lead reveal">You've read 50 articles this week.<br>None of that thinking made it into your content.</h2>
+    <p class="problem-body reveal">Every creator knows the feeling. You bookmark the research, save the articles, collect the insights — but when it's time to post, you open a blank prompt and ask a generic AI to write something "interesting."</p>
+    <p class="problem-body reveal">The result sounds like everyone else. Because it was written from everyone else's training data — not from the specific body of research only you have curated.</p>
+    <div class="problem-highlight reveal">
+      <strong>The gap nobody has solved:</strong> your curated knowledge and your published content live in completely separate worlds. You read and save in one place. You write in another. The connection between what you know and what you publish — that synthesis — is the work that gets skipped.
+    </div>
+    <p class="problem-close reveal">Echora closes that gap. Your research becomes your content.</p>
+  </div>
+</section>
+
+<!-- ═══ 03 — HOW IT WORKS ═══ -->
+<section id="hiw">
+  <div class="container">
+    <div class="hiw-header reveal">
+      <div class="section-num">(02) — The synthesis loop</div>
+      <h2>From saved to published.<br>Five steps. Your thinking.</h2>
+      <p>Not AI writing for you. AI amplifying what you already know.</p>
+    </div>
+    <div class="hiw-steps reveal">
+
+      <div class="hiw-step">
+        <div class="step-num">01</div>
+        <div class="step-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5"/><line x1="8" y1="5" x2="8" y2="11"/><line x1="5" y1="8" x2="11" y2="8"/></svg>
+        </div>
+        <h3>Save anything</h3>
+        <p>See something online that sparks an idea? Save it in one click — articles, videos, PDFs, tweets, voice notes.</p>
+        <div class="hiw-connector"><svg fill="none" viewBox="0 0 10 10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h4M5 3l2 2-2 2"/></svg></div>
+      </div>
+
+      <div class="hiw-step featured">
+        <div class="step-num">02 ← the magic</div>
+        <div class="step-icon featured-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="8" cy="12" r="2"/><line x1="6" y1="4" x2="10" y2="4"/><line x1="5" y1="6" x2="7.5" y2="10"/><line x1="11" y1="6" x2="8.5" y2="10"/></svg>
+        </div>
+        <h3>Bring sources to the canvas</h3>
+        <p>Select 3–6 saved pieces, bring them to the canvas. Echora maps the connections between them — ideas you'd never have joined alone surface instantly.</p>
+        <div class="hiw-connector"><svg fill="none" viewBox="0 0 10 10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h4M5 3l2 2-2 2"/></svg></div>
+      </div>
+
+      <div class="hiw-step">
+        <div class="step-num">03</div>
+        <div class="step-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><path d="M2 12 C2 8 5 4 10 3"/><path d="M5 12 C5 9 7 6 10 5"/><line x1="3.5" y1="1.5" x2="5.5" y2="12.5" stroke="#EDE8E0" stroke-width="1.2"/></svg>
+        </div>
+        <h3>Generate original content</h3>
+        <p>The agent synthesises the connections into a post that reflects your unique perspective — not generic AI output. Every insight is sourced and cited.</p>
+        <div class="hiw-connector"><svg fill="none" viewBox="0 0 10 10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h4M5 3l2 2-2 2"/></svg></div>
+      </div>
+
+      <div class="hiw-step">
+        <div class="step-num">04</div>
+        <div class="step-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M5 7h6M5 10h4"/></svg>
+        </div>
+        <h3>Approve and schedule</h3>
+        <p>Review the draft with every source cited. Edit, refine, or publish directly. Schedule across LinkedIn and X from one calendar.</p>
+        <div class="hiw-connector"><svg fill="none" viewBox="0 0 10 10" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h4M5 3l2 2-2 2"/></svg></div>
+      </div>
+
+      <div class="hiw-step">
+        <div class="step-num">05</div>
+        <div class="step-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><polyline points="2,10 6,6 10,9 14,4"/><circle cx="14" cy="4" r="1.5" fill="#FF6B35" stroke="none"/></svg>
+        </div>
+        <h3>Track and improve</h3>
+        <p>See which sources drove the most engagement. Analytics feed back into your knowledge graph — future content ideas surface in your voice automatically.</p>
+      </div>
+
+    </div>
+    <p class="hiw-bottom reveal">The more you save, the sharper your synthesis gets.</p>
+  </div>
+</section>
+
+<!-- ═══ 04 — CANVAS MOMENT ═══ -->
+<section id="canvas-section">
+  <div class="container">
+    <div class="canvas-header reveal">
+      <div class="canvas-label">(03) — The synthesis canvas</div>
+      <h2>Where your research becomes original thought.</h2>
+      <p>Bring 3–6 saved pieces onto the canvas. Watch the connections between them surface. Then generate content from the synthesis — not from a blank prompt.</p>
+    </div>
+
+    <div class="canvas-mockup reveal">
+      <div class="canvas-chrome">
+        <div class="canvas-dots">
+          <div class="canvas-dot" style="background:#E24B4A;opacity:0.6;"></div>
+          <div class="canvas-dot" style="background:#EF9F27;opacity:0.6;"></div>
+          <div class="canvas-dot" style="background:#1D9E75;opacity:0.6;"></div>
+        </div>
+        <div class="canvas-url">app.echora.co/canvas</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--success);">● 5 sources loaded</div>
+      </div>
+
+      <div class="canvas-body">
+        <!-- Sidebar -->
+        <div class="canvas-sidebar">
+          <div class="sidebar-brand">
+            <div class="sidebar-brand-name">Echora</div>
+            <div class="sidebar-brand-sub">Synthesis Canvas</div>
+          </div>
+          <div class="sidebar-nav-item active">
+            <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+            Canvas
+          </div>
+          <div class="sidebar-nav-item">
+            <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 11V5l5-3 5 3v6"/><rect x="5" y="7" width="4" height="4"/></svg>
+            Library
+          </div>
+          <div class="sidebar-nav-item">
+            <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="2"/><line x1="7" y1="1" x2="7" y2="4"/><line x1="7" y1="10" x2="7" y2="13"/><line x1="1" y1="7" x2="4" y2="7"/><line x1="10" y1="7" x2="13" y2="7"/></svg>
+            Graph
+          </div>
+          <div class="sidebar-nav-item">
+            <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="10" height="10" rx="1"/><line x1="5" y1="5" x2="9" y2="5"/><line x1="5" y1="8" x2="7" y2="8"/></svg>
+            Agents
+          </div>
+
+          <div class="sidebar-section-label">On canvas (5)</div>
+          <div class="saved-item">
+            <div class="saved-item-dot" style="background:#1D9E75;"></div>
+            <div><div class="saved-item-text">AI authenticity & voice in 2026</div><div class="saved-item-type">article · saved 2d ago</div></div>
+          </div>
+          <div class="saved-item">
+            <div class="saved-item-dot" style="background:#FF6B35;"></div>
+            <div><div class="saved-item-text">LinkedIn algorithm changes</div><div class="saved-item-type">research · saved 4d ago</div></div>
+          </div>
+          <div class="saved-item">
+            <div class="saved-item-dot" style="background:#378ADD;"></div>
+            <div><div class="saved-item-text">Creator economy 2026 report</div><div class="saved-item-type">PDF · saved 1w ago</div></div>
+          </div>
+          <div class="saved-item">
+            <div class="saved-item-dot" style="background:rgba(237,232,224,0.3);"></div>
+            <div><div class="saved-item-text">Contrarian content strategy</div><div class="saved-item-type">notes · saved 3d ago</div></div>
+          </div>
+          <div class="saved-item">
+            <div class="saved-item-dot" style="background:rgba(237,232,224,0.3);"></div>
+            <div><div class="saved-item-text">Voice-first writing framework</div><div class="saved-item-type">article · saved 5d ago</div></div>
+          </div>
+
+          <button class="sidebar-add-btn">
+            <svg width="10" height="10" fill="none" viewBox="0 0 10 10" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="5" y1="1" x2="5" y2="9"/><line x1="1" y1="5" x2="9" y2="5"/></svg>
+            Add to canvas
+          </button>
+        </div>
+
+        <!-- Canvas area with SVG -->
+        <div class="canvas-area">
+          <div class="canvas-topbar">
+            <div class="canvas-title">Research Synthesis — AI Content Authenticity</div>
+            <div class="canvas-meta">5 sources · 7 connections found</div>
+            <div class="canvas-tools">
+              <div class="canvas-tool">⊞</div>
+              <div class="canvas-tool">+</div>
+              <div class="canvas-tool">−</div>
+            </div>
+          </div>
+
+          <svg class="canvas-svg" viewBox="0 0 580 440" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <radialGradient id="cGlow1" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#FF6B35" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#FF6B35" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="cGlowG" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.2"/>
+                <stop offset="100%" stop-color="#1D9E75" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="cGlowB" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#378ADD" stop-opacity="0.2"/>
+                <stop offset="100%" stop-color="#378ADD" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="f3"><feGaussianBlur stdDeviation="3"/></filter>
+              <filter id="f6"><feGaussianBlur stdDeviation="6"/></filter>
+              <marker id="arr" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+                <path d="M1 1L6 4L1 7" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round"/>
+              </marker>
+            </defs>
+
+            <!-- Connection lines with arrows -->
+            <g fill="none">
+              <line x1="160" y1="140" x2="285" y2="215" stroke="rgba(255,107,53,0.35)" stroke-width="1.2" marker-end="url(#arr)"/>
+              <line x1="380" y1="100" x2="315" y2="210" stroke="rgba(255,107,53,0.3)" stroke-width="1.2" marker-end="url(#arr)"/>
+              <line x1="130" y1="310" x2="285" y2="245" stroke="rgba(29,158,117,0.3)" stroke-width="1" marker-end="url(#arr)"/>
+              <line x1="440" y1="300" x2="320" y2="250" stroke="rgba(55,138,221,0.3)" stroke-width="1" marker-end="url(#arr)"/>
+              <line x1="290" y1="370" x2="295" y2="260" stroke="rgba(237,232,224,0.15)" stroke-width="0.8" marker-end="url(#arr)"/>
+              <!-- Cross connection with label -->
+              <line x1="160" y1="155" x2="130" y2="300" stroke="rgba(29,158,117,0.2)" stroke-width="0.8" stroke-dasharray="4 3"/>
+              <line x1="380" y1="115" x2="440" y2="290" stroke="rgba(55,138,221,0.2)" stroke-width="0.8" stroke-dasharray="4 3"/>
+            </g>
+
+            <!-- Connection label in middle -->
+            <rect x="240" y="165" width="100" height="20" rx="4" fill="rgba(255,107,53,0.08)" stroke="rgba(255,107,53,0.2)" stroke-width="0.5"/>
+            <text x="290" y="178" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8" fill="rgba(255,107,53,0.7)">7 connections</text>
+
+            <!-- Center synthesis node — glowing -->
+            <circle cx="300" cy="230" r="44" fill="url(#cGlow1)" filter="url(#f6)"/>
+            <circle cx="300" cy="230" r="32" fill="#0D1610" stroke="#FF6B35" stroke-width="1.5"/>
+            <circle cx="300" cy="230" r="22" fill="#152219"/>
+            <g transform="translate(300,230)">
+              <line x1="0" y1="-10" x2="0" y2="10" stroke="#FF6B35" stroke-width="1.4" stroke-linecap="round"/>
+              <line x1="-10" y1="0" x2="10" y2="0" stroke="#FF6B35" stroke-width="1.4" stroke-linecap="round"/>
+              <line x1="-7" y1="-7" x2="7" y2="7" stroke="#FF6B35" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
+              <line x1="7" y1="-7" x2="-7" y2="7" stroke="#FF6B35" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
+            </g>
+            <text x="300" y="188" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7.5" fill="rgba(255,107,53,0.5)" letter-spacing="1.5">SYNTHESIS</text>
+            <text x="300" y="278" text-anchor="middle" font-family="Inter,sans-serif" font-size="9.5" fill="rgba(237,232,224,0.5)" font-weight="500">Content Strategy</text>
+
+            <!-- Source node 1 — AI Authenticity -->
+            <circle cx="155" cy="135" r="28" fill="url(#cGlowG)" filter="url(#f3)"/>
+            <circle cx="155" cy="135" r="20" fill="#0A1410" stroke="rgba(29,158,117,0.5)" stroke-width="1"/>
+            <circle cx="155" cy="135" r="6" fill="#1D9E75"/>
+            <text x="155" y="168" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.55)">AI Authenticity</text>
+            <text x="155" y="180" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.55)">Research</text>
+            <rect x="120" y="97" width="70" height="14" rx="3" fill="rgba(29,158,117,0.1)" stroke="rgba(29,158,117,0.2)" stroke-width="0.5"/>
+            <text x="155" y="107" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="rgba(29,158,117,0.7)">article · 2d ago</text>
+
+            <!-- Source node 2 — LinkedIn Algo -->
+            <circle cx="385" cy="95" r="26" fill="url(#cGlow1)" filter="url(#f3)"/>
+            <circle cx="385" cy="95" r="18" fill="#0A1410" stroke="rgba(255,107,53,0.5)" stroke-width="1"/>
+            <circle cx="385" cy="95" r="6" fill="#FF6B35"/>
+            <text x="385" y="127" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.55)">LinkedIn Algo</text>
+            <text x="385" y="139" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.55)">2026</text>
+            <rect x="353" y="58" width="64" height="14" rx="3" fill="rgba(255,107,53,0.08)" stroke="rgba(255,107,53,0.2)" stroke-width="0.5"/>
+            <text x="385" y="68" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="rgba(255,107,53,0.6)">research · 4d</text>
+
+            <!-- Source node 3 — Creator Economy -->
+            <circle cx="120" cy="315" r="24" fill="url(#cGlowB)" filter="url(#f3)"/>
+            <circle cx="120" cy="315" r="16" fill="#0A1410" stroke="rgba(55,138,221,0.4)" stroke-width="1"/>
+            <circle cx="120" cy="315" r="5" fill="#378ADD"/>
+            <text x="120" y="345" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.5)">Creator Economy</text>
+            <text x="120" y="357" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.5)">Report</text>
+
+            <!-- Source node 4 — Contrarian Strategy -->
+            <circle cx="450" cy="300" r="22" fill="#0A1410" stroke="rgba(237,232,224,0.15)" stroke-width="0.8"/>
+            <circle cx="450" cy="300" r="5" fill="rgba(237,232,224,0.35)"/>
+            <text x="450" y="330" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.4)">Contrarian</text>
+            <text x="450" y="342" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.4)">Strategy</text>
+
+            <!-- Source node 5 — Voice-First -->
+            <circle cx="290" cy="378" r="18" fill="#0A1410" stroke="rgba(237,232,224,0.1)" stroke-width="0.8"/>
+            <circle cx="290" cy="378" r="4" fill="rgba(237,232,224,0.25)"/>
+            <text x="290" y="405" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.35)">Voice-First Writing</text>
+
+            <!-- Insight bubble floating -->
+            <rect x="420" y="180" width="130" height="56" rx="8" fill="rgba(255,107,53,0.07)" stroke="rgba(255,107,53,0.2)" stroke-width="0.5"/>
+            <text x="432" y="196" font-family="JetBrains Mono,monospace" font-size="7.5" fill="rgba(255,107,53,0.5)">💡 INSIGHT FOUND</text>
+            <text x="432" y="210" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.6)">Engagement drops when</text>
+            <text x="432" y="222" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.6)">research stops feeding</text>
+            <text x="432" y="234" font-family="Inter,sans-serif" font-size="8.5" fill="rgba(237,232,224,0.6)">content creation.</text>
+          </svg>
+
+          <div class="canvas-bottom">
+            <div class="canvas-count">5 sources · 7 connections · 3 insights</div>
+            <button class="canvas-synthesise-btn">
+              <svg width="10" height="10" fill="none" viewBox="0 0 10 10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"><path d="M2 8L8 2M5 2h3v3"/></svg>
+              Synthesise → generate
+            </button>
+          </div>
+        </div>
+
+        <!-- Right panel -->
+        <div class="canvas-panel">
+          <div class="panel-section">Synthesis output</div>
+          <div class="panel-synthesis-header">
+            <span style="font-size:13px;font-weight:600;color:var(--cream);">3 insights found</span>
+            <span class="panel-synthesis-badge">ready</span>
+          </div>
+          <div class="panel-connections">
+            <div class="panel-connection">
+              <div class="panel-conn-dot" style="background:#FF6B35;"></div>
+              AI authenticity → engagement patterns
+            </div>
+            <div class="panel-connection">
+              <div class="panel-conn-dot" style="background:#1D9E75;"></div>
+              Research volume → voice authenticity
+            </div>
+            <div class="panel-connection">
+              <div class="panel-conn-dot" style="background:#378ADD;"></div>
+              Creator economy → platform shift
+            </div>
+          </div>
+
+          <div class="panel-insight">
+            <div class="panel-insight-label">TOP INSIGHT</div>
+            <div class="panel-insight-text">"Creators who maintain a research habit outperform those who rely on AI prompts alone — by 3.4× in authentic engagement."</div>
+          </div>
+
+          <div class="panel-section" style="margin-top:14px;">Generate for</div>
+          <button class="panel-generate-btn">Generate LinkedIn post →</button>
+          <div class="panel-platform-row">
+            <button class="panel-platform-btn">X thread</button>
+            <button class="panel-platform-btn">Save as idea</button>
+          </div>
+
+          <div class="panel-section" style="margin-top:14px;">Voice match</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:3px;background:rgba(237,232,224,0.06);border-radius:100px;overflow:hidden;">
+              <div style="width:94%;height:100%;background:var(--ember);border-radius:100px;"></div>
+            </div>
+            <span style="font-size:11px;color:var(--ember);font-family:'JetBrains Mono',monospace;">94%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 05 — FEATURES BENTO ═══ -->
+<section id="features">
+  <div class="container">
+    <div class="features-header reveal">
+      <div class="features-label">(04) — Everything you need</div>
+      <h2>The full synthesis platform</h2>
+    </div>
+
+    <div class="bento-grid reveal">
+      <!-- Tile 1: Big stat -->
+      <div class="bento-tile">
+        <div class="tile-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5"/><circle cx="8" cy="8" r="2" fill="#FF6B35" stroke="none"/></svg>
+        </div>
+        <div class="tile-big-num"><span>94</span>%</div>
+        <h3>Voice match score</h3>
+        <p>Average fidelity across all generated posts. Trained from your writing, not a style template.</p>
+      </div>
+
+      <!-- Tile 2: Save anything -->
+      <div class="bento-tile">
+        <div class="tile-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>
+        </div>
+        <h3>Save from anywhere</h3>
+        <p>Browser extension, mobile share sheet, or paste a URL. Articles, PDFs, videos, tweets, voice notes — all ingested.</p>
+      </div>
+
+      <!-- Tile 3: Agents -->
+      <div class="bento-tile">
+        <div class="tile-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><path d="M2 12 C2 8 5 4 10 3"/><path d="M5 12 C5 9 7 6 10 5"/><line x1="3.5" y1="1.5" x2="5.5" y2="12.5" stroke="#EDE8E0" stroke-width="1.2"/></svg>
+        </div>
+        <h3>LinkedIn + X agents</h3>
+        <p>The Authority (LinkedIn) and The Catalyst (X) generate platform-native content from your synthesis.</p>
+      </div>
+
+      <!-- Tile 4: Synthesis canvas — span 2 -->
+      <div class="bento-tile span2">
+        <span class="tile-badge">Core feature</span>
+        <h3>Synthesis canvas — the differentiator</h3>
+        <p>Drag 3–6 saved sources onto the canvas. Echora maps the connections and surfaces insights you'd never have made alone. Every post is built from that synthesis — not from a blank prompt.</p>
+        <div class="tile-bars">
+          <div class="tile-bar-row"><span class="tile-bar-lbl">Sources connected</span><div class="tile-bar-track"><div class="tile-bar-fill" style="width:100%"></div></div><span class="tile-bar-pct">5/5</span></div>
+          <div class="tile-bar-row"><span class="tile-bar-lbl">Insights surfaced</span><div class="tile-bar-track"><div class="tile-bar-fill" style="width:60%"></div></div><span class="tile-bar-pct">3 found</span></div>
+          <div class="tile-bar-row"><span class="tile-bar-lbl">Voice match</span><div class="tile-bar-track"><div class="tile-bar-fill" style="width:94%;opacity:0.85"></div></div><span class="tile-bar-pct">94%</span></div>
+        </div>
+      </div>
+
+      <!-- Tile 5: Scheduling -->
+      <div class="bento-tile">
+        <div class="tile-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="2"/><line x1="5" y1="1" x2="5" y2="5"/><line x1="11" y1="1" x2="11" y2="5"/><line x1="2" y1="7" x2="14" y2="7"/></svg>
+        </div>
+        <h3>Content calendar</h3>
+        <p>Schedule posts to LinkedIn and X from one view. Queue approved drafts, see your publishing rhythm.</p>
+        <div class="mini-calendar">
+          <div class="cal-day header">M</div><div class="cal-day header">T</div><div class="cal-day header">W</div><div class="cal-day header">T</div><div class="cal-day header">F</div><div class="cal-day header">S</div><div class="cal-day header">S</div>
+          <div class="cal-day">1</div><div class="cal-day has-post">2</div><div class="cal-day">3</div><div class="cal-day has-post">4</div><div class="cal-day">5</div><div class="cal-day">6</div><div class="cal-day">7</div>
+          <div class="cal-day has-post">8</div><div class="cal-day">9</div><div class="cal-day today">10</div><div class="cal-day">11</div><div class="cal-day has-post">12</div><div class="cal-day">13</div><div class="cal-day">14</div>
+        </div>
+      </div>
+
+      <!-- Tile 6: Analytics -->
+      <div class="bento-tile">
+        <div class="tile-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><polyline points="2,12 6,7 10,9 14,3"/></svg>
+        </div>
+        <h3>Source analytics</h3>
+        <p>See which saved sources drive the most engagement. Analytics feed back into your knowledge graph.</p>
+        <div class="mini-chart">
+          <div class="chart-bar" style="height:30%"></div>
+          <div class="chart-bar" style="height:55%"></div>
+          <div class="chart-bar" style="height:40%"></div>
+          <div class="chart-bar peak" style="height:85%"></div>
+          <div class="chart-bar" style="height:65%"></div>
+          <div class="chart-bar" style="height:70%"></div>
+          <div class="chart-bar peak" style="height:90%"></div>
+          <div class="chart-bar" style="height:60%"></div>
+          <div class="chart-bar" style="height:75%"></div>
+          <div class="chart-bar" style="height:50%"></div>
+        </div>
+      </div>
+
+      <!-- Tile 7: Research discovery -->
+      <div class="bento-tile">
+        <div class="tile-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4"/><line x1="10" y1="10" x2="13.5" y2="13.5"/><line x1="6.5" y1="4" x2="6.5" y2="9"/><line x1="4" y1="6.5" x2="9" y2="6.5"/></svg>
+        </div>
+        <h3>Research discovery</h3>
+        <p>Need more sources? Research mode surfaces relevant articles and papers based on your knowledge graph — for users who want discovery, not just curation.</p>
+      </div>
+
+      <!-- Tile 8: Future ideas -->
+      <div class="bento-tile">
+        <div class="tile-icon">
+          <svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"><path d="M8 2a5 5 0 100 10 5 5 0 000-10z"/><path d="M6 12v2M10 12v2M6 14h4"/><line x1="8" y1="5" x2="8" y2="9"/></svg>
+        </div>
+        <h3>Future content ideas</h3>
+        <p>Echora proactively surfaces post ideas in your voice — based on what you've saved, what's performed, and what's trending in your niche.</p>
+      </div>
+
+      <!-- Tile 9: Creators -->
+      <div class="bento-tile">
+        <div class="tile-avatars">
+          <div class="tile-av">SR</div>
+          <div class="tile-av">MT</div>
+          <div class="tile-av">AO</div>
+          <div class="tile-av ember">+</div>
+        </div>
+        <div class="tile-big-num" style="font-size:34px;"><span>847</span></div>
+        <h3>Creators this week</h3>
+        <p>Already synthesising research into original content.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 06 — KNOWLEDGE GRAPH ═══ -->
+<section id="knowledge">
+  <div class="container">
+    <div class="kg-header reveal">
+      <div class="kg-label">(05) — Knowledge graph</div>
+      <h2>Your brain, indexed.</h2>
+      <p>Every piece of research you've ever saved, mapped as a living graph. The canvas pulls from here. The agents learn from here.</p>
+    </div>
+
+    <div class="kg-browser reveal">
+      <div class="kg-chrome">
+        <div class="kg-dots">
+          <div class="kg-dot" style="background:#E24B4A;opacity:0.6;"></div>
+          <div class="kg-dot" style="background:#EF9F27;opacity:0.6;"></div>
+          <div class="kg-dot" style="background:#1D9E75;opacity:0.6;"></div>
+        </div>
+        <div class="kg-url">app.echora.co/graph</div>
+        <div class="kg-status">● Optimal</div>
+      </div>
+
+      <div class="kg-dashboard">
+        <div class="kg-sidebar">
+          <div class="kg-brand">
+            <div class="kg-brand-name">Echora</div>
+            <div class="kg-brand-sub">Knowledge Engine</div>
+          </div>
+          <div class="kg-nav-item"><svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>Dashboard</div>
+          <div class="kg-nav-item active"><svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="2"/><circle cx="2" cy="3" r="1.2"/><circle cx="12" cy="3" r="1.2"/><circle cx="2" cy="11" r="1.2"/><circle cx="12" cy="11" r="1.2"/><line x1="3.2" y1="3.6" x2="5.2" y2="5.6"/><line x1="10.8" y1="3.6" x2="8.8" y2="5.6"/><line x1="3.2" y1="10.4" x2="5.2" y2="8.4"/><line x1="10.8" y1="10.4" x2="8.8" y2="8.4"/></svg>Graph</div>
+          <div class="kg-nav-item"><svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="1" width="5" height="5" rx="1"/><path d="M8 3h5M8 7h5M1 11h12"/></svg>Canvas</div>
+          <div class="kg-nav-item"><svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="2,10 6,5 10,7 12,3"/></svg>Analytics</div>
+          <div class="kg-nav-item"><svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="12" height="9" rx="1"/><line x1="4" y1="1" x2="4" y2="5"/><line x1="10" y1="1" x2="10" y2="5"/><line x1="1" y1="6" x2="13" y2="6"/></svg>Schedule</div>
+          <button class="kg-new-node"><svg width="11" height="11" fill="none" viewBox="0 0 11 11" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="5.5" y1="1" x2="5.5" y2="10"/><line x1="1" y1="5.5" x2="10" y2="5.5"/></svg>Add Node</button>
+        </div>
+
+        <div class="kg-canvas">
+          <div class="kg-topbar">
+            <div class="kg-system-status">System Status: <span>Optimal</span></div>
+            <div class="kg-search"><svg width="10" height="10" fill="none" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.5"><circle cx="4" cy="4" r="3"/><line x1="6.5" y1="6.5" x2="9" y2="9"/></svg>Find node...</div>
+            <div class="kg-tools"><div class="kg-tool-btn">⊞</div><div class="kg-tool-btn">+</div><div class="kg-tool-btn">−</div></div>
+          </div>
+          <div class="kg-edge-fade top"></div>
+
+          <svg class="kg-graph-svg" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FF6B35" stop-opacity="0.3"/><stop offset="100%" stop-color="#FF6B35" stop-opacity="0"/></radialGradient>
+              <radialGradient id="nodeGlowGreen" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#1D9E75" stop-opacity="0.25"/><stop offset="100%" stop-color="#1D9E75" stop-opacity="0"/></radialGradient>
+              <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+              <filter id="blur3"><feGaussianBlur stdDeviation="3"/></filter>
+            </defs>
+            <g stroke="rgba(30,46,34,0.8)" stroke-width="1" fill="none">
+              <line x1="320" y1="240" x2="185" y2="115" stroke="rgba(255,107,53,0.2)" stroke-width="1.5"/>
+              <line x1="320" y1="240" x2="460" y2="125" stroke="rgba(255,107,53,0.2)" stroke-width="1.5"/>
+              <line x1="320" y1="240" x2="155" y2="310" stroke="rgba(30,46,34,0.9)" stroke-width="1"/>
+              <line x1="320" y1="240" x2="490" y2="325" stroke="rgba(255,107,53,0.25)" stroke-width="1.5"/>
+              <line x1="320" y1="240" x2="320" y2="385" stroke="rgba(30,46,34,0.9)" stroke-width="1"/>
+              <line x1="320" y1="240" x2="200" y2="405" stroke="rgba(30,46,34,0.7)" stroke-width="0.8"/>
+              <line x1="320" y1="240" x2="455" y2="415" stroke="rgba(30,46,34,0.7)" stroke-width="0.8"/>
+              <line x1="185" y1="115" x2="460" y2="125" stroke="rgba(30,46,34,0.5)" stroke-width="0.6"/>
+              <line x1="155" y1="310" x2="200" y2="405" stroke="rgba(30,46,34,0.5)" stroke-width="0.6"/>
+              <line x1="490" y1="325" x2="455" y2="415" stroke="rgba(30,46,34,0.5)" stroke-width="0.6"/>
+              <line x1="185" y1="115" x2="80" y2="190" stroke="rgba(30,46,34,0.4)" stroke-width="0.6"/>
+              <line x1="460" y1="125" x2="560" y2="205" stroke="rgba(30,46,34,0.4)" stroke-width="0.6"/>
+            </g>
+            <circle cx="320" cy="240" r="52" fill="url(#nodeGlow)" filter="url(#blur6)" opacity="0.8"/>
+            <g><circle cx="185" cy="115" r="18" fill="#0D1610" stroke="rgba(255,107,53,0.3)" stroke-width="1"/><circle cx="185" cy="115" r="18" fill="url(#nodeGlowGreen)" filter="url(#blur3)"/><text x="185" y="146" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(237,232,224,0.5)">AI Authenticity</text><circle cx="185" cy="115" r="5" fill="#1D9E75"/></g>
+            <g><circle cx="460" cy="125" r="20" fill="#0D1610" stroke="rgba(255,107,53,0.35)" stroke-width="1.2"/><text x="460" y="156" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(237,232,224,0.5)">LinkedIn Algorithm</text><circle cx="460" cy="125" r="5" fill="#1D9E75"/></g>
+            <g><circle cx="155" cy="310" r="14" fill="#0D1610" stroke="rgba(237,232,224,0.1)" stroke-width="0.8"/><text x="155" y="333" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(237,232,224,0.35)">Creator Economy</text></g>
+            <g><circle cx="490" cy="325" r="22" fill="#0D1610" stroke="rgba(255,107,53,0.4)" stroke-width="1.5"/><circle cx="490" cy="325" r="22" fill="url(#nodeGlow)" filter="url(#blur3)" opacity="0.5"/><text x="490" y="356" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(237,232,224,0.5)">Contrarian Content</text><circle cx="490" cy="325" r="7" fill="#FF6B35"/></g>
+            <g><circle cx="320" cy="385" r="14" fill="#0D1610" stroke="rgba(237,232,224,0.1)" stroke-width="0.8"/><text x="320" y="408" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(237,232,224,0.35)">Voice-First Writing</text></g>
+            <g><circle cx="200" cy="405" r="12" fill="#0D1610" stroke="rgba(237,232,224,0.08)" stroke-width="0.8"/><text x="200" y="426" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(237,232,224,0.3)">B2B Leadership</text></g>
+            <g><circle cx="455" cy="415" r="12" fill="#0D1610" stroke="rgba(237,232,224,0.08)" stroke-width="0.8"/><text x="455" y="436" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(237,232,224,0.3)">Content Automation</text></g>
+            <g><circle cx="80" cy="190" r="11" fill="#0D1610" stroke="rgba(237,232,224,0.07)" stroke-width="0.8"/><text x="80" y="210" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(237,232,224,0.25)">X/Twitter Growth</text></g>
+            <g><circle cx="560" cy="205" r="11" fill="#0D1610" stroke="rgba(237,232,224,0.07)" stroke-width="0.8"/><text x="560" y="225" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="rgba(237,232,224,0.25)">Audience Psychology</text></g>
+            <circle cx="320" cy="240" r="38" fill="#070E09" stroke="#FF6B35" stroke-width="2"/>
+            <circle cx="320" cy="240" r="28" fill="#0D1610"/>
+            <g transform="translate(320,240)">
+              <line x1="0" y1="-12" x2="0" y2="12" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="-12" y1="0" x2="12" y2="0" stroke="#FF6B35" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="-8" y1="-8" x2="8" y2="8" stroke="#FF6B35" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+              <line x1="8" y1="-8" x2="-8" y2="8" stroke="#FF6B35" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+            </g>
+            <text x="320" y="194" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8" fill="rgba(255,107,53,0.5)" letter-spacing="2">CONTENT HUB</text>
+            <text x="320" y="286" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="rgba(237,232,224,0.45)" font-weight="500">Content Strategy</text>
+          </svg>
+
+          <div class="kg-edge-fade bottom"></div>
+          <div class="kg-bottom-bar">
+            <span>24 nodes · 38 connections</span>
+            <div class="kg-selection-pill">2 nodes selected · Brief agent →</div>
+            <span>Select nodes to synthesise</span>
+          </div>
+        </div>
+
+        <div class="kg-panel">
+          <div style="overflow:hidden;"><span class="kg-panel-badge">Knowledge Node</span><span class="kg-panel-saved">Saved 2d ago</span></div>
+          <div class="kg-node-title">Contrarian Content Strategy</div>
+          <div class="kg-node-domain">domain: echora.internal/content_strat_04</div>
+          <div class="kg-panel-section">Linked Themes</div>
+          <div class="kg-tags"><span class="kg-tag">Content Marketing</span><span class="kg-tag">AI Tools</span><span class="kg-tag">Creator Economy</span></div>
+          <div class="kg-panel-section">Connections</div>
+          <div class="kg-connection"><div class="kg-conn-dot" style="background:var(--ember);"></div><span class="kg-conn-label">AI Authenticity Research</span><span class="kg-conn-arrow">›</span></div>
+          <div class="kg-connection"><div class="kg-conn-dot" style="background:var(--ember);"></div><span class="kg-conn-label">LinkedIn Algorithm 2026</span><span class="kg-conn-arrow">›</span></div>
+          <div class="kg-connection"><div class="kg-conn-dot" style="background:rgba(237,232,224,0.2);"></div><span class="kg-conn-label">Voice-First Writing</span><span class="kg-conn-arrow">›</span></div>
+          <div class="kg-connection"><div class="kg-conn-dot" style="background:rgba(237,232,224,0.2);"></div><span class="kg-conn-label">Creator Economy Report</span><span class="kg-conn-arrow">›</span></div>
+          <button class="kg-select-btn">Add to canvas →</button>
+          <div class="kg-select-hint">Select nodes then synthesise</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kg-caption reveal">
+      <div class="kg-caption-item"><div class="kg-caption-dot" style="background:#FF6B35;"></div>Active / selected node</div>
+      <div class="kg-caption-item"><div class="kg-caption-dot" style="background:#1D9E75;"></div>Recently saved</div>
+      <div class="kg-caption-item"><div class="kg-caption-dot" style="background:rgba(237,232,224,0.2);"></div>Connected knowledge</div>
+      <div class="kg-caption-item" style="color:var(--ember);">24 nodes · 38 connections · your library</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 07 — TESTIMONIALS ═══ -->
+<section id="testimonials">
+  <div class="testimonials-header reveal">
+    <div class="section-num">(06) — Social proof</div>
+    <h2>Used by the void's brightest.</h2>
+  </div>
+  <div class="marquee-wrap">
+    <div class="marquee-row">
+      <div class="marquee-track">
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">The canvas is the thing. I've been saving research for years — Echora is the first tool that actually makes me use it. I bring 4–5 articles together and a post emerges that I couldn't have written alone.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">SR</div><div><div class="tcard-name">Sarah R.</div><div class="tcard-role">Founder, B2B SaaS</div></div><span class="tcard-match">94% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">I used to read 20 articles a week and publish nothing. Now my research actually becomes content. The synthesis step is what was missing from every other tool I tried.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">MT</div><div><div class="tcard-name">Marcus T.</div><div class="tcard-role">Growth Consultant</div></div><span class="tcard-match">91% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">The voice match is real. First time I've seen 94% and actually agreed. It's not just my writing style — it pulled from specific things I've saved and built an argument I'd actually make.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">AO</div><div><div class="tcard-name">Amara O.</div><div class="tcard-role">LinkedIn Creator, 40K</div></div><span class="tcard-match">91% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">The scheduling and analytics closed the loop for me. I can see exactly which research sources drove engagement. That feedback makes every future synthesis sharper.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">JK</div><div><div class="tcard-name">James K.</div><div class="tcard-role">CEO, Tech Startup</div></div><span class="tcard-match">89% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">The canvas is the thing. I've been saving research for years — Echora is the first tool that actually makes me use it. I bring 4–5 articles together and a post emerges that I couldn't have written alone.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">SR</div><div><div class="tcard-name">Sarah R.</div><div class="tcard-role">Founder, B2B SaaS</div></div><span class="tcard-match">94% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">I used to read 20 articles a week and publish nothing. Now my research actually becomes content. The synthesis step is what was missing from every other tool I tried.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">MT</div><div><div class="tcard-name">Marcus T.</div><div class="tcard-role">Growth Consultant</div></div><span class="tcard-match">91% voice</span></div></div>
+      </div>
+    </div>
+    <div class="marquee-row">
+      <div class="marquee-track">
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">Stopped using Taplio after one week. Their tool writes from nothing. Echora writes from everything I've already researched. The difference in quality is embarrassing for them.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">DL</div><div><div class="tcard-name">David L.</div><div class="tcard-role">Founder, Agency</div></div><span class="tcard-match">96% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">The future content ideas feature is wild. It looks at my saved library and tells me what I should write about next — and it's always something I'd actually want to say.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">RK</div><div><div class="tcard-name">Rahul K.</div><div class="tcard-role">Investor & Writer</div></div><span class="tcard-match">93% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">I was skeptical until I saw the synthesis canvas. Pulling 5 pieces of research together and watching connections emerge — that's a genuinely new capability. Nothing else does this.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">PN</div><div><div class="tcard-name">Priya N.</div><div class="tcard-role">Product Manager</div></div><span class="tcard-match">92% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">Analytics finally tied to source material. I know which articles drove my best performing posts. That feedback loop is worth the subscription alone.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">LM</div><div><div class="tcard-name">Lisa M.</div><div class="tcard-role">CMO, Series B</div></div><span class="tcard-match">88% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">Stopped using Taplio after one week. Their tool writes from nothing. Echora writes from everything I've already researched. The difference in quality is embarrassing for them.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">DL</div><div><div class="tcard-name">David L.</div><div class="tcard-role">Founder, Agency</div></div><span class="tcard-match">96% voice</span></div></div>
+        <div class="testimonial-card"><span class="tcard-quote-mark">"</span><p class="tcard-text">The future content ideas feature is wild. It looks at my saved library and tells me what I should write about next — and it's always something I'd actually want to say.</p><hr class="tcard-divider"><div class="tcard-author"><div class="tcard-av">RK</div><div><div class="tcard-name">Rahul K.</div><div class="tcard-role">Investor & Writer</div></div><span class="tcard-match">93% voice</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 08 — STATS ═══ -->
+<section id="stats">
+  <div class="stats-row reveal">
+    <div class="stat-item"><div class="stat-num"><span>94</span>%</div><div class="stat-label">Average voice match score</div></div>
+    <div class="stat-item"><div class="stat-num">5<span>×</span></div><div class="stat-label">More posts from same research</div></div>
+    <div class="stat-item"><div class="stat-num"><span>847</span></div><div class="stat-label">Creators synthesising this week</div></div>
+  </div>
+</section>
+
+<!-- ═══ 09 — PRICING ═══ -->
+<section id="pricing">
+  <div class="container">
+    <div class="pricing-header reveal">
+      <div class="section-num">(07) — Choose your plan</div>
+      <h2>Simple, honest pricing.</h2>
+      <p>Start free. Upgrade when your synthesis proves its worth.</p>
+    </div>
+    <div class="pricing-grid reveal">
+
+      <div class="pricing-card">
+        <div class="pricing-tier">Scout</div>
+        <div class="pricing-price"><span class="currency">$</span>0</div>
+        <div class="pricing-period">free forever</div>
+        <button class="pricing-cta cta-outline">Get started →</button>
+        <hr class="pricing-divider">
+        <ul class="pricing-features">
+          <li><span class="feat-check">✓</span>Save up to 30 items to library</li>
+          <li><span class="feat-check">✓</span>Synthesis canvas — 3 canvases/mo</li>
+          <li><span class="feat-check">✓</span>Knowledge graph (read-only)</li>
+          <li><span class="feat-check">✓</span>Voice DNA profile — 1 platform</li>
+          <li><span class="feat-check">✓</span>5 generated posts per month</li>
+          <li><span class="feat-dash">–</span><span style="opacity:0.4;">Content calendar & scheduling</span></li>
+          <li><span class="feat-dash">–</span><span style="opacity:0.4;">Analytics & source tracking</span></li>
+          <li><span class="feat-dash">–</span><span style="opacity:0.4;">Future content ideas</span></li>
+        </ul>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="popular-tag">Most popular</div>
+        <div class="pricing-tier">Authority</div>
+        <div class="pricing-price"><span class="currency">$</span>29</div>
+        <div class="pricing-period">per month</div>
+        <button class="pricing-cta cta-solid">Get the Authority →</button>
+        <hr class="pricing-divider">
+        <ul class="pricing-features">
+          <li><span class="feat-check">✓</span>Unlimited library saves</li>
+          <li><span class="feat-check">✓</span>Synthesis canvas — unlimited</li>
+          <li><span class="feat-check">✓</span>Full knowledge graph + connections</li>
+          <li><span class="feat-check">✓</span>Voice DNA — LinkedIn + X</li>
+          <li><span class="feat-check">✓</span>The Authority agent — 20 posts/mo</li>
+          <li><span class="feat-check">✓</span>Content calendar & scheduling</li>
+          <li><span class="feat-check">✓</span>Source analytics dashboard</li>
+          <li><span class="feat-check">✓</span>Future content ideas (in your voice)</li>
+          <li><span class="feat-check">✓</span>Source citations on every post</li>
+        </ul>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-tier">Amplified</div>
+        <div class="pricing-price"><span class="currency">$</span>49</div>
+        <div class="pricing-period">per month</div>
+        <button class="pricing-cta cta-outline">Get Amplified →</button>
+        <hr class="pricing-divider">
+        <ul class="pricing-features">
+          <li><span class="feat-check">✓</span>Everything in Authority</li>
+          <li><span class="feat-check">✓</span>The Catalyst — X/Twitter agent</li>
+          <li><span class="feat-check">✓</span>Unlimited posts — both platforms</li>
+          <li><span class="feat-check">✓</span>Research discovery mode</li>
+          <li><span class="feat-check">✓</span>Advanced analytics + learning loop</li>
+          <li><span class="feat-check">✓</span>Tone guardrails slider</li>
+          <li><span class="feat-check">✓</span>Autonomous publishing mode</li>
+          <li><span class="feat-check">✓</span>Priority support</li>
+        </ul>
+      </div>
+    </div>
+    <p class="pricing-note">14-day free trial on all plans. No credit card required.</p>
+  </div>
+</section>
+
+<!-- ═══ 10 — CTA ═══ -->
+<section id="cta">
+  <canvas id="ctaCanvas"></canvas>
+  <div class="cta-content">
+    <p class="cta-overline">— Your research is waiting —</p>
+    <h2 class="cta-headline">Stop saving. Start synthesising.</h2>
+    <p class="cta-sub">Be heard.</p>
+    <button class="btn-primary" style="font-size:15px;padding:15px 36px;">Start synthesising for free →</button>
+    <p class="cta-social">Join 847 creators turning their research into original content.</p>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="logo-row">
+        <div class="nav-mark" style="width:22px;height:22px;">
+          <svg viewBox="0 0 12 12" fill="none" width="10" height="10">
+            <path d="M4 10 C4 6 6 3 10 2" stroke="#FF6B35" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.5"/>
+            <path d="M6 10 C6 7 7.5 5 10 4" stroke="#FF6B35" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <line x1="5" y1="1.5" x2="7.5" y2="11" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span style="font-size:12px;font-weight:700;letter-spacing:0.07em;color:var(--cream);">ECHORA</span>
+      </div>
+      <p>Save research. Synthesise connections. Publish original thought leadership.</p>
+      <p class="footer-tagline">Your research, amplified.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <ul><li><a href="#">Synthesis Canvas</a></li><li><a href="#">Knowledge Graph</a></li><li><a href="#">How it works</a></li><li><a href="#">Pricing</a></li><li><a href="#">Changelog</a></li></ul>
+    </div>
+    <div class="footer-col">
+      <h4>Agents</h4>
+      <ul><li><a href="#">The Authority</a></li><li><a href="#">The Catalyst</a></li><li><a href="#">Voice DNA</a></li><li><a href="#">Analytics</a></li><li><a href="#">Scheduling</a></li></ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul><li><a href="#">About</a></li><li><a href="#">Blog</a></li><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li></ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Echora. All rights reserved.</p>
+    <p class="footer-bottom-right">Built for creators who have something real to say.</p>
+  </div>
+</footer>
+
+<script>
+// ── CARD CYCLING ──
+const cards = [
+  {
+    badge: 'Synthesis · 4 sources connected',
+    match: '94% voice match',
+    post: '"73% of creators saw engagement drop after switching to generic AI. The algorithm didn\'t change. Their connection to real research did..."',
+    bars: [{ label: 'Sources used', pct: 100, display: '4/4' }, { label: 'Voice match', pct: 94, display: '94%' }, { label: 'Insights found', pct: 75, display: '3' }],
+    sources: ['AI Authenticity Study', 'LinkedIn Algo 2026', 'Creator Economy', '+1 more']
+  },
+  {
+    badge: 'Canvas · 5 sources · 7 connections',
+    match: 'Synthesising...',
+    post: '"The gap nobody solved: your curated research and your published content live in completely separate worlds. Echora closes that gap."',
+    bars: [{ label: 'Connections', pct: 100, display: '7 found' }, { label: 'Insights', pct: 60, display: '3' }, { label: 'Voice match', pct: 91, display: '91%' }],
+    sources: ['5 sources on canvas', 'Auto-connected', 'Ready to generate']
+  },
+  {
+    badge: 'Post draft · LinkedIn · approved',
+    match: '91% voice match',
+    post: '"I read 50 articles a week. For years, none of that thinking made it into my content. That changes today. Here\'s the system..."',
+    bars: [{ label: 'Sources cited', pct: 100, display: '4 cited' }, { label: 'Voice match', pct: 91, display: '91%' }, { label: 'Engagement est.', pct: 80, display: 'High' }],
+    sources: ['4 sources cited', 'Approved', 'Scheduled 9am']
+  }
+];
+
+let cardIdx = 0;
+function cycleCard() {
+  const content = document.getElementById('cardContent');
+  content.style.opacity = '0';
+  setTimeout(() => {
+    cardIdx = (cardIdx + 1) % cards.length;
+    const c = cards[cardIdx];
+    document.getElementById('cardBadge').textContent = c.badge;
+    document.getElementById('cardMatch').textContent = c.match;
+    document.getElementById('cardPost').textContent = c.post;
+    document.getElementById('cardBars').innerHTML = c.bars.map(b =>
+      `<div class="sc-bar-row"><span class="sc-bar-lbl">${b.label}</span><div class="sc-bar-track"><div class="sc-bar-fill" style="width:${b.pct}%"></div></div><span class="sc-bar-pct">${b.display}</span></div>`
+    ).join('');
+    document.getElementById('cardSources').innerHTML = c.sources.map(s =>
+      `<span class="sc-source-pill">${s}</span>`
+    ).join('');
+    content.style.opacity = '1';
+  }, 400);
+}
+setInterval(cycleCard, 3800);
+
+// ── KNOWLEDGE GRAPH PULSE ──
+(function() {
+  const glow = document.querySelector('#nodeGlow stop:first-child');
+  if (!glow) return;
+  let op = 0.3, dir = 1;
+  setInterval(() => {
+    op += dir * 0.007;
+    if (op >= 0.45) dir = -1;
+    if (op <= 0.18) dir = 1;
+    glow.setAttribute('stop-opacity', op.toFixed(3));
+  }, 50);
+})();
+
+// ── CTA BACKGROUND PATHS ──
+(function() {
+  const canvas = document.getElementById('ctaCanvas');
+  const section = document.getElementById('cta');
+  if (!canvas || !section) return;
+  const ctx = canvas.getContext('2d');
+  function resize() { canvas.width = section.offsetWidth; canvas.height = section.offsetHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  const paths = Array.from({ length: 18 }, (_, i) => ({
+    points: Array.from({ length: 40 }, (_, j) => ({
+      x: (i / 17) * canvas.width + (Math.random() - 0.5) * 60,
+      y: (j / 39) * canvas.height
+    })),
+    speed: 0.3 + Math.random() * 0.4,
+    offset: Math.random() * Math.PI * 2,
+    opacity: 0.04 + Math.random() * 0.08
+  }));
+  let t = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    paths.forEach(path => {
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(255,107,53,${path.opacity})`;
+      ctx.lineWidth = 0.8;
+      path.points.forEach((pt, i) => {
+        const wave = Math.sin(t * path.speed + path.offset + i * 0.3) * 25;
+        if (i === 0) ctx.moveTo(pt.x + wave, pt.y);
+        else ctx.lineTo(pt.x + wave, pt.y);
+      });
+      ctx.stroke();
+    });
+    t += 0.008;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── SCROLL REVEAL ──
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+reveals.forEach(r => observer.observe(r));
+</script>
+</body>
+</html>
