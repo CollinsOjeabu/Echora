@@ -36,6 +36,39 @@ export const getByClerkId = query({
 })
 
 /**
+ * Ensure a profile exists for the current Clerk user.
+ * Called client-side by the useCurrentUser hook on first dashboard visit.
+ * Idempotent — does nothing if profile already exists.
+ */
+export const ensureProfile = mutation({
+  args: {
+    clerkId: v.string(),
+    email: v.string(),
+    name: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
+  },
+  returns: v.id("profiles"),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .unique()
+
+    if (existing) {
+      return existing._id
+    }
+
+    return await ctx.db.insert("profiles", {
+      clerkId: args.clerkId,
+      email: args.email,
+      name: args.name,
+      avatarUrl: args.avatarUrl,
+      plan: "free",
+    })
+  },
+})
+
+/**
  * Upsert profile from Clerk webhook (user.created / user.updated).
  * Internal — only callable from other Convex functions (e.g. HTTP webhook handler).
  */

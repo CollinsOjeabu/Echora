@@ -11,43 +11,12 @@ import {
   Zap,
   Brain,
   FileText,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
-
-const stats = [
-  {
-    label: "Knowledge Items",
-    value: "0",
-    change: "Start adding content",
-    icon: BookOpen,
-    color: "text-status-info",
-    bgColor: "bg-status-info/10",
-  },
-  {
-    label: "Connections Found",
-    value: "0",
-    change: "Graph grows as you add",
-    icon: GitFork,
-    color: "text-echora-lime",
-    bgColor: "bg-echora-lime/10",
-  },
-  {
-    label: "Posts Generated",
-    value: "0",
-    change: "Your agents are ready",
-    icon: Bot,
-    color: "text-status-warning",
-    bgColor: "bg-status-warning/10",
-  },
-  {
-    label: "Voice Accuracy",
-    value: "—",
-    change: "Train your voice profile",
-    icon: TrendingUp,
-    color: "text-status-success",
-    bgColor: "bg-status-success/10",
-  },
-];
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 const quickActions = [
   {
@@ -83,10 +52,74 @@ const container = {
 
 const item = {
   hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const },
+  },
 };
 
 export default function DashboardPage() {
+  const { profile, isLoading } = useCurrentUser();
+
+  // Fetch real data once we have the profile
+  const contentItems = useQuery(
+    api.content.list,
+    profile ? { userId: profile._id } : "skip",
+  );
+  const agentPosts = useQuery(
+    api.posts.list,
+    profile ? { userId: profile._id } : "skip",
+  );
+
+  const contentCount = contentItems?.length ?? 0;
+  const postsCount = agentPosts?.length ?? 0;
+
+  const firstName = profile?.name?.split(" ")[0] ?? "there";
+
+  const stats = [
+    {
+      label: "Knowledge Items",
+      value: contentCount.toString(),
+      change: contentCount > 0 ? `${contentCount} saved` : "Start adding content",
+      icon: BookOpen,
+      color: "text-status-info",
+      bgColor: "bg-status-info/10",
+    },
+    {
+      label: "Connections Found",
+      value: "0",
+      change: "Graph grows as you add",
+      icon: GitFork,
+      color: "text-echora-lime",
+      bgColor: "bg-echora-lime/10",
+    },
+    {
+      label: "Posts Generated",
+      value: postsCount.toString(),
+      change: postsCount > 0 ? `${postsCount} generated` : "Your agents are ready",
+      icon: Bot,
+      color: "text-status-warning",
+      bgColor: "bg-status-warning/10",
+    },
+    {
+      label: "Voice Accuracy",
+      value: "—",
+      change: "Train your voice profile",
+      icon: TrendingUp,
+      color: "text-status-success",
+      bgColor: "bg-status-success/10",
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="w-6 h-6 text-ember animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <motion.div
       variants={container}
@@ -97,10 +130,12 @@ export default function DashboardPage() {
       {/* Header */}
       <motion.div variants={item}>
         <h1 className="font-heading text-2xl font-bold text-text-primary">
-          Welcome to Echora
+          Welcome back, {firstName}
         </h1>
         <p className="text-text-secondary mt-1">
-          Your knowledge graph is empty — let&apos;s start building it.
+          {contentCount === 0
+            ? "Your knowledge graph is empty — let's start building it."
+            : `You have ${contentCount} item${contentCount !== 1 ? "s" : ""} in your knowledge base.`}
         </p>
       </motion.div>
 
@@ -169,29 +204,54 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Empty State: Recent Activity */}
+      {/* Recent Activity */}
       <motion.div variants={item}>
         <h2 className="font-heading text-lg font-semibold text-text-primary mb-4">
           Recent Activity
         </h2>
-        <div className="glass-card p-12 flex flex-col items-center justify-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-surface-600 flex items-center justify-center mb-4">
-            <BookOpen className="w-6 h-6 text-text-tertiary" />
+        {contentItems && contentItems.length > 0 ? (
+          <div className="space-y-2">
+            {contentItems.slice(0, 5).map((ci) => (
+              <div
+                key={ci._id}
+                className="glass-card px-5 py-3 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-status-info/10 flex items-center justify-center">
+                    <BookOpen className="w-4 h-4 text-status-info" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-text-primary truncate max-w-[400px]">
+                      {ci.title}
+                    </p>
+                    <p className="text-xs text-text-tertiary capitalize">
+                      {ci.type} · {ci.status}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <h3 className="font-heading font-semibold text-text-primary mb-1">
-            No activity yet
-          </h3>
-          <p className="text-text-secondary text-sm max-w-sm mb-5">
-            Start by saving an article, uploading a PDF, or pasting some notes.
-            Your knowledge graph will grow from here.
-          </p>
-          <Link href="/dashboard/library/new">
-            <button className="btn-lime flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Add Your First Content
-            </button>
-          </Link>
-        </div>
+        ) : (
+          <div className="glass-card p-12 flex flex-col items-center justify-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-surface-600 flex items-center justify-center mb-4">
+              <BookOpen className="w-6 h-6 text-text-tertiary" />
+            </div>
+            <h3 className="font-heading font-semibold text-text-primary mb-1">
+              No activity yet
+            </h3>
+            <p className="text-text-secondary text-sm max-w-sm mb-5">
+              Start by saving an article, uploading a PDF, or pasting some notes.
+              Your knowledge graph will grow from here.
+            </p>
+            <Link href="/dashboard/library/new">
+              <button className="btn-lime flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Add Your First Content
+              </button>
+            </Link>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

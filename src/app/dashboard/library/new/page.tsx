@@ -1,22 +1,74 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus, LinkIcon, FileUp, StickyNote } from "lucide-react";
+import { Plus, LinkIcon, FileUp, StickyNote, Check, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "../../../../../convex/_generated/api";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useRouter } from "next/navigation";
 
 type ContentType = "url" | "file" | "note";
 
 export default function NewContentPage() {
+  const { profile, isLoading: profileLoading } = useCurrentUser();
+  const router = useRouter();
+  const createContent = useMutation(api.content.create);
+
   const [activeTab, setActiveTab] = useState<ContentType>("url");
   const [url, setUrl] = useState("");
   const [note, setNote] = useState("");
   const [title, setTitle] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const tabs = [
     { id: "url" as ContentType, label: "Paste URL", icon: LinkIcon },
     { id: "file" as ContentType, label: "Upload File", icon: FileUp },
     { id: "note" as ContentType, label: "Quick Note", icon: StickyNote },
   ];
+
+  const handleSaveUrl = async () => {
+    if (!profile || !url) return;
+    setSaving(true);
+    try {
+      await createContent({
+        userId: profile._id,
+        type: "article",
+        title: url, // Will be replaced by Firecrawl scrape later
+        url,
+      });
+      setSaved(true);
+      setTimeout(() => router.push("/dashboard/library"), 800);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveNote = async () => {
+    if (!profile || !title || !note) return;
+    setSaving(true);
+    try {
+      await createContent({
+        userId: profile._id,
+        type: "note",
+        title,
+        rawText: note,
+      });
+      setSaved(true);
+      setTimeout(() => router.push("/dashboard/library"), 800);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="w-6 h-6 text-ember animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -40,7 +92,10 @@ export default function NewContentPage() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSaved(false);
+              }}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? "bg-surface-500 text-text-primary"
@@ -77,9 +132,19 @@ export default function NewContentPage() {
             Echora will fetch the article, extract key concepts, and add it to
             your knowledge graph.
           </p>
-          <button className="btn-lime flex items-center gap-2" disabled={!url}>
-            <Plus className="w-4 h-4" />
-            Save to Knowledge Base
+          <button
+            className="btn-lime flex items-center gap-2"
+            disabled={!url || saving}
+            onClick={handleSaveUrl}
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : saved ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            {saved ? "Saved!" : "Save to Knowledge Base"}
           </button>
         </motion.div>
       )}
@@ -103,6 +168,9 @@ export default function NewContentPage() {
             </p>
             <button className="btn-ghost text-sm">Browse Files</button>
           </div>
+          <p className="text-text-tertiary text-xs mt-3 text-center">
+            File upload will be available once Convex file storage is configured.
+          </p>
         </motion.div>
       )}
 
@@ -138,10 +206,17 @@ export default function NewContentPage() {
           </div>
           <button
             className="btn-lime flex items-center gap-2"
-            disabled={!title || !note}
+            disabled={!title || !note || saving}
+            onClick={handleSaveNote}
           >
-            <Plus className="w-4 h-4" />
-            Save Note
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : saved ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            {saved ? "Saved!" : "Save Note"}
           </button>
         </motion.div>
       )}
