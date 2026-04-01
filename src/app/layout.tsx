@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { ConvexClerkProvider } from "@/providers/ConvexClerkProvider";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -44,7 +45,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-surface-900 text-text-primary antialiased">
-        {children}
+        <ConvexClerkProvider>
+          {children}
+        </ConvexClerkProvider>
       </body>
     </html>
   );
