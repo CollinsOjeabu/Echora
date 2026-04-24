@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 const C = {
   ember: "#FF6B35", cream: "#EDE8E0", creamMuted: "rgba(237,232,224,0.45)",
@@ -88,12 +89,13 @@ export default function Hero() {
 
       {/* Buttons */}
       <div style={{display:"flex",gap:12,marginBottom:16,animation:"fadeUp 0.8s 0.3s ease both"}}>
-        <button style={{
+        <Link href="/sign-up" style={{
           fontSize:14, fontWeight:600, background:C.ember, color:"#fff",
           padding:"13px 28px", borderRadius:100, border:"none", cursor:"pointer",
+          textDecoration:"none", display:"inline-block",
         }}>
           Start synthesising for free →
-        </button>
+        </Link>
         <button style={{
           fontSize:14, background:"transparent", color:C.creamMuted,
           padding:"13px 24px", borderRadius:100,

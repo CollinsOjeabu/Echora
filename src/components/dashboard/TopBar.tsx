@@ -1,77 +1,124 @@
-"use client";
+'use client'
 
-import { Search, Bell, LogOut } from "lucide-react";
-import { useState } from "react";
-import { useClerk } from "@clerk/nextjs";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import Image from "next/image";
+import { usePathname } from 'next/navigation'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 
-export default function TopBar() {
-  const [searchFocused, setSearchFocused] = useState(false);
-  const { profile, clerkUser } = useCurrentUser();
-  const { signOut } = useClerk();
+const BREADCRUMBS: Record<string, string> = {
+  '/dashboard': 'Home',
+  '/dashboard/canvas': 'Canvas',
+  '/dashboard/library': 'Library',
+  '/dashboard/agents': 'Agents',
+  '/dashboard/schedule': 'Schedule',
+  '/dashboard/analytics': 'Analytics',
+  '/dashboard/settings': 'Settings',
+}
 
-  const displayName =
-    profile?.name ?? clerkUser?.fullName ?? clerkUser?.firstName ?? "User";
-  const avatarUrl = profile?.avatarUrl ?? clerkUser?.imageUrl;
-  const initials = displayName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+export function TopBar() {
+  const pathname = usePathname()
+  const currentPage = BREADCRUMBS[pathname] || 'Home'
+  const { profile, isLoading } = useCurrentUser()
+  const initial = profile?.name?.charAt(0).toUpperCase() ?? '?'
 
   return (
-    <header className="h-16 border-b border-border-default bg-surface-800/60 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-30">
-      {/* Search */}
-      <div className="relative w-full max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-        <input
-          type="text"
-          placeholder="Search your knowledge base..."
-          className="input-base pl-10 bg-surface-700/50"
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-        />
-      </div>
-
-      {/* Right Side */}
-      <div className="flex items-center gap-3 ml-4">
-        {/* Notifications */}
-        <button className="relative p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-glass-bg transition-all">
-          <Bell className="w-[18px] h-[18px]" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-echora-lime rounded-full" />
-        </button>
-
-        {/* User Avatar + Name */}
-        <div className="flex items-center gap-2">
-          {avatarUrl ? (
-            <Image
-              src={avatarUrl}
-              alt={displayName}
-              width={32}
-              height={32}
-              className="w-8 h-8 rounded-full border border-border-default object-cover"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-ember/20 border border-ember/30 flex items-center justify-center text-ember text-xs font-bold">
-              {initials}
-            </div>
-          )}
-          <span className="text-sm text-text-secondary font-medium hidden lg:block max-w-[120px] truncate">
-            {displayName}
-          </span>
+    <header style={{
+      height: 48, flexShrink: 0,
+      background: 'var(--bg-page)',
+      borderBottom: '0.5px solid var(--border)',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0 20px', gap: 14,
+    }}>
+      {/* Left — breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+          <span>Echora</span>
+          <span style={{ opacity: 0.3 }}>/</span>
+          <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{currentPage}</span>
         </div>
-
-        {/* Sign Out */}
-        <button
-          onClick={() => signOut({ redirectUrl: "/" })}
-          className="p-2 rounded-lg text-text-tertiary hover:text-status-error hover:bg-status-error/10 transition-all"
-          title="Sign out"
-        >
-          <LogOut className="w-[18px] h-[18px]" />
-        </button>
       </div>
+
+      {/* Centre — search */}
+      <div
+        aria-label="Search (coming soon)"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 7,
+          background: 'var(--bg-surface)', border: '0.5px solid var(--border)',
+          borderRadius: 8, padding: '6px 12px', fontSize: 12,
+          color: 'var(--text-muted)', cursor: 'text',
+          minWidth: 200,
+        }}
+        className="topbar-search"
+      >
+        <svg width="12" height="12" fill="none" viewBox="0 0 13 13" stroke="currentColor" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+          <circle cx="5.5" cy="5.5" r="4"/><line x1="8.5" y1="8.5" x2="12" y2="12"/>
+        </svg>
+        Search anything...
+        <kbd style={{
+          marginLeft: 'auto', fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 9, background: 'var(--bg-elevated)', padding: '1px 5px',
+          borderRadius: 4, color: 'var(--text-faint)',
+        }}>⌘K</kbd>
+      </div>
+
+      {/* Right — actions */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {/* Notification bell */}
+        <button className="tbtn" style={{
+          width: 30, height: 30, borderRadius: 7,
+          background: 'transparent', border: '0.5px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: 'var(--text-muted)', position: 'relative',
+        }}>
+          <svg width="13" height="13" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M7 1.5a4.5 4.5 0 00-4.5 4.5v2.5l-1 2h11l-1-2V6A4.5 4.5 0 007 1.5zM5.5 12a1.5 1.5 0 003 0"/>
+          </svg>
+          {/* Orange dot */}
+          <span style={{
+            position: 'absolute', top: 4, right: 4,
+            width: 6, height: 6, borderRadius: '50%',
+            background: 'var(--ember)', border: '1.5px solid var(--bg-page)',
+          }}/>
+        </button>
+
+        {/* Help */}
+        <button className="tbtn" style={{
+          width: 30, height: 30, borderRadius: 7,
+          background: 'transparent', border: '0.5px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: 'var(--text-muted)',
+        }}>
+          <svg width="13" height="13" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <circle cx="7" cy="7" r="5"/>
+            <path d="M5.5 5.5a1.5 1.5 0 113 0c0 1.5-1.5 1.5-1.5 2.8"/>
+            <circle cx="7" cy="11" r=".4" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+
+        {/* Separator */}
+        <div style={{ width: 1, height: 18, background: 'var(--border)', margin: '0 2px' }}/>
+
+        {/* User avatar */}
+        {isLoading ? (
+          <div style={{
+            width: 28, height: 28, borderRadius: '50%',
+            background: 'var(--bg-elevated)',
+            animation: 'pulse 1.5s ease-in-out infinite',
+          }} />
+        ) : (
+          <div style={{
+            width: 28, height: 28, borderRadius: '50%',
+            background: 'var(--ember)', border: '1.5px solid var(--border-hover)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 10, fontWeight: 700, color: '#fff', cursor: 'pointer',
+            fontFamily: "'DM Serif Display', serif",
+          }}>{initial}</div>
+        )}
+      </div>
+
+      <style jsx>{`
+        .topbar-search:hover { border-color: var(--border-hover) !important; }
+        .tbtn:hover { background: var(--bg-hover) !important; border-color: var(--border-hover) !important; color: var(--text-primary) !important; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+      `}</style>
     </header>
-  );
+  )
 }

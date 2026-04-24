@@ -1,5 +1,6 @@
 import { query, mutation, internalMutation } from "./_generated/server"
 import { v } from "convex/values"
+import { ConvexError } from "convex/values"
 
 /**
  * Get the current user's profile by their Clerk ID.
@@ -17,6 +18,10 @@ export const getByClerkId = query({
       avatarUrl: v.optional(v.string()),
       plan: v.union(v.literal("free"), v.literal("pro"), v.literal("team")),
       onboardedAt: v.optional(v.number()),
+      onboardingComplete: v.optional(v.boolean()),
+      linkedInUrl: v.optional(v.string()),
+      twitterHandle: v.optional(v.string()),
+      voiceRawSamples: v.optional(v.array(v.string())),
       voiceProfile: v.optional(
         v.object({
           tone: v.optional(v.string()),
@@ -31,6 +36,23 @@ export const getByClerkId = query({
     return await ctx.db
       .query("profiles")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .unique()
+  },
+})
+
+/**
+ * Get the current authenticated user's profile.
+ * Uses Clerk auth identity — no args needed.
+ */
+export const getCurrent = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
+
+    return await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique()
   },
 })
@@ -65,6 +87,64 @@ export const ensureProfile = mutation({
       avatarUrl: args.avatarUrl,
       plan: "free",
     })
+  },
+})
+
+/**
+ * Mark onboarding as complete for the current user.
+ */
+export const completeOnboarding = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError("Not authenticated")
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique()
+
+    if (!profile) throw new ConvexError("Profile not found")
+
+    await ctx.db.patch(profile._id, {
+      onboardingComplete: true,
+      onboardedAt: Date.now(),
+    })
+
+    return { success: true }
+  },
+})
+
+/**
+ * Save raw writing samples for voice training (Phase E analyses them).
+ */
+export const saveVoiceSamples = mutation({
+  args: { samples: v.array(v.string()) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError("Not authenticated")
+
+    if (args.samples.length === 0)
+      throw new ConvexError("At least one writing sample is required")
+    if (args.samples.length > 5)
+      throw new ConvexError("Maximum 5 writing samples allowed")
+
+    const cleaned = args.samples.map((s) => s.trim()).filter((s) => s.length > 0)
+    if (cleaned.length === 0)
+      throw new ConvexError("Samples cannot be empty")
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique()
+
+    if (!profile) throw new ConvexError("Profile not found")
+
+    await ctx.db.patch(profile._id, {
+      voiceRawSamples: cleaned,
+    })
+
+    return { saved: true, count: cleaned.length }
   },
 })
 
@@ -142,6 +222,37 @@ export const updateVoiceProfile = mutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.profileId, {
       voiceProfile: args.voiceProfile,
+    })
+    return null
+  },
+})
+
+/**
+ * Update profile fields from Settings page.
+ * Uses Clerk auth — no profileId needed.
+ */
+export const updateProfile = mutation({
+  args: {
+    name: v.optional(v.string()),
+    linkedInUrl: v.optional(v.string()),
+    twitterHandle: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError("Not authenticated")
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique()
+
+    if (!profile) throw new ConvexError("Profile not found")
+
+    await ctx.db.patch(profile._id, {
+      ...(args.name !== undefined && { name: args.name }),
+      ...(args.linkedInUrl !== undefined && { linkedInUrl: args.linkedInUrl }),
+      ...(args.twitterHandle !== undefined && { twitterHandle: args.twitterHandle }),
     })
     return null
   },

@@ -31,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn("dark", "font-sans", geist.variable)}>
+    <html lang="en" className={cn("dark", "font-sans", geist.variable)} data-theme="void">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -44,7 +44,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-surface-900 text-text-primary antialiased">
+      <body className="min-h-screen antialiased">
         <ConvexClerkProvider>
           {children}
         </ConvexClerkProvider>

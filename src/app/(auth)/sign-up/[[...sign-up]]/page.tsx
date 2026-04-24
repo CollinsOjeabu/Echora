@@ -33,6 +33,8 @@ export default function SignUpPage() {
       {/* Right — Clerk sign-up */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <SignUp
+          forceRedirectUrl="/dashboard"
+          fallbackRedirectUrl="/dashboard"
           appearance={{
             elements: {
               rootBox: 'w-full max-w-md',

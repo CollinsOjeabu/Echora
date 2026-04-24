@@ -10,6 +10,10 @@ export default defineSchema({
     avatarUrl: v.optional(v.string()),
     plan: v.union(v.literal("free"), v.literal("pro"), v.literal("team")),
     onboardedAt: v.optional(v.number()),
+    onboardingComplete: v.optional(v.boolean()),
+    linkedInUrl: v.optional(v.string()),
+    twitterHandle: v.optional(v.string()),
+    voiceRawSamples: v.optional(v.array(v.string())),
     voiceProfile: v.optional(
       v.object({
         tone: v.optional(v.string()),
@@ -65,17 +69,16 @@ export default defineSchema({
     .index("by_source", ["sourceId"])
     .index("by_target", ["targetId"]),
 
-  // ─── Canvas: spatial layout sessions for the graph ───
+  // ─── Canvas: conversation workspace sessions ───
   canvasSessions: defineTable({
     userId: v.id("profiles"),
     name: v.string(),
-    nodes: v.array(
-      v.object({
-        contentItemId: v.id("contentItems"),
-        x: v.number(),
-        y: v.number(),
-      }),
-    ),
+    sourceIds: v.array(v.id("contentItems")),
+    chatHistory: v.optional(v.array(v.object({
+      role: v.union(v.literal("user"), v.literal("agent")),
+      content: v.string(),
+      timestamp: v.number(),
+    }))),
     lastOpenedAt: v.number(),
   }).index("by_user", ["userId"]),
 
@@ -91,6 +94,7 @@ export default defineSchema({
       v.literal("draft"),
       v.literal("review"),
       v.literal("approved"),
+      v.literal("scheduled"),
       v.literal("published"),
       v.literal("rejected"),
     ),
@@ -98,6 +102,7 @@ export default defineSchema({
     publishedAt: v.optional(v.number()),
     publishedUrl: v.optional(v.string()),
     feedback: v.optional(v.string()),
+    voiceMatchScore: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
     .index("by_user_and_status", ["userId", "status"])

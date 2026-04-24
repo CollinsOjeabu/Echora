@@ -1,8 +1,0 @@
-{
-  "name": "Echora - Autonomous AI Content Workforce",
-  "description": "The world's first autonomous, platform-specific AI agent system that masters LinkedIn and Twitter, working 24/7 in your authentic voice.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
-}

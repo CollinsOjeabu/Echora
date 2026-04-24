@@ -1,258 +1,321 @@
-"use client";
+'use client'
 
-import { motion } from "framer-motion";
-import {
-  BookOpen,
-  GitFork,
-  Bot,
-  TrendingUp,
-  Plus,
-  ArrowRight,
-  Zap,
-  Brain,
-  FileText,
-  Loader2,
-} from "lucide-react";
-import Link from "next/link";
-import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import Link from 'next/link'
+import { useQuery } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 
-const quickActions = [
-  {
-    title: "Save an Article",
-    description: "Paste a URL to add to your knowledge base",
-    icon: FileText,
-    href: "/dashboard/library/new",
-    color: "text-status-info",
-  },
-  {
-    title: "Explore Your Graph",
-    description: "See how your ideas connect",
-    icon: Brain,
-    href: "/dashboard/graph",
-    color: "text-echora-lime",
-  },
-  {
-    title: "Generate a Post",
-    description: "Let AI craft content from your research",
-    icon: Zap,
-    href: "/dashboard/agents",
-    color: "text-status-warning",
-  },
-];
+function SkeletonBar({ width, height }: { width: number; height: number }) {
+  return (
+    <div style={{
+      width, height, borderRadius: 4,
+      background: 'var(--bg-elevated)',
+      animation: 'pulse 1.5s ease-in-out infinite',
+    }} />
+  )
+}
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08 },
-  },
-};
+function formatRelativeTime(timestamp: number): string {
+  const diff = Date.now() - timestamp
+  const minutes = Math.floor(diff / 60000)
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h`
+  const days = Math.floor(hours / 24)
+  return `${days}d`
+}
 
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] as const },
-  },
-};
+export default function DashboardHome() {
+  const { profile, isLoading: userLoading } = useCurrentUser()
 
-export default function DashboardPage() {
-  const { profile, isLoading } = useCurrentUser();
-
-  // Fetch real data once we have the profile
+  // Queries — skip until profile is loaded
   const contentItems = useQuery(
     api.content.list,
-    profile ? { userId: profile._id } : "skip",
-  );
+    profile?._id ? { userId: profile._id } : 'skip'
+  )
   const agentPosts = useQuery(
     api.posts.list,
-    profile ? { userId: profile._id } : "skip",
-  );
+    profile?._id ? { userId: profile._id } : 'skip'
+  )
 
-  const contentCount = contentItems?.length ?? 0;
-  const postsCount = agentPosts?.length ?? 0;
+  // Derived data
+  const firstName = profile?.name?.split(' ')[0] ?? ''
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
 
-  const firstName = profile?.name?.split(" ")[0] ?? "there";
+  // Stats
+  const libraryCount = contentItems?.length ?? 0
+  const publishedPosts = agentPosts?.filter((p: { status: string }) => p.status === 'published') ?? []
+  const publishedCount = publishedPosts.length
 
-  const stats = [
-    {
-      label: "Knowledge Items",
-      value: contentCount.toString(),
-      change: contentCount > 0 ? `${contentCount} saved` : "Start adding content",
-      icon: BookOpen,
-      color: "text-status-info",
-      bgColor: "bg-status-info/10",
-    },
-    {
-      label: "Connections Found",
-      value: "0",
-      change: "Graph grows as you add",
-      icon: GitFork,
-      color: "text-echora-lime",
-      bgColor: "bg-echora-lime/10",
-    },
-    {
-      label: "Posts Generated",
-      value: postsCount.toString(),
-      change: postsCount > 0 ? `${postsCount} generated` : "Your agents are ready",
-      icon: Bot,
-      color: "text-status-warning",
-      bgColor: "bg-status-warning/10",
-    },
-    {
-      label: "Voice Accuracy",
-      value: "—",
-      change: "Train your voice profile",
-      icon: TrendingUp,
-      color: "text-status-success",
-      bgColor: "bg-status-success/10",
-    },
-  ];
+  // Agent drafts
+  const pendingDrafts = agentPosts?.filter((p: { status: string }) => p.status === 'draft' || p.status === 'review') ?? []
+  const linkedinDrafts = pendingDrafts.filter((p: { platform: string }) => p.platform === 'linkedin')
+  const xDrafts = pendingDrafts.filter((p: { platform: string }) => p.platform === 'x')
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="w-6 h-6 text-ember animate-spin" />
-      </div>
-    );
-  }
+  // Loading states
+  const statsLoading = contentItems === undefined || agentPosts === undefined
+  const postsLoading = agentPosts === undefined
 
   return (
-    <motion.div
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="space-y-8"
-    >
+    <div style={{ animation: 'fadeIn 0.18s ease' }}>
       {/* Header */}
-      <motion.div variants={item}>
-        <h1 className="font-heading text-2xl font-bold text-text-primary">
-          Welcome back, {firstName}
-        </h1>
-        <p className="text-text-secondary mt-1">
-          {contentCount === 0
-            ? "Your knowledge graph is empty — let's start building it."
-            : `You have ${contentCount} item${contentCount !== 1 ? "s" : ""} in your knowledge base.`}
-        </p>
-      </motion.div>
-
-      {/* Stats Grid */}
-      <motion.div
-        variants={item}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.label} className="glass-card p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-text-secondary text-sm font-medium">
-                  {stat.label}
-                </span>
-                <div
-                  className={`w-8 h-8 rounded-lg ${stat.bgColor} flex items-center justify-center`}
-                >
-                  <Icon className={`w-4 h-4 ${stat.color}`} />
-                </div>
-              </div>
-              <div className="text-2xl font-heading font-bold text-text-primary">
-                {stat.value}
-              </div>
-              <p className="text-text-tertiary text-xs mt-1">{stat.change}</p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          {userLoading ? (
+            <SkeletonBar width={180} height={24} />
+          ) : (
+            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 21, color: 'var(--text-primary)', marginBottom: 2 }}>
+              {greeting}, <em style={{ color: 'var(--ember)', fontStyle: 'italic' }}>{firstName}.</em>
             </div>
-          );
-        })}
-      </motion.div>
-
-      {/* Quick Actions */}
-      <motion.div variants={item}>
-        <h2 className="font-heading text-lg font-semibold text-text-primary mb-4">
-          Get Started
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Link key={action.title} href={action.href}>
-                <motion.div
-                  whileHover={{ y: -2, scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  className="glass-card p-5 cursor-pointer group"
-                >
-                  <div
-                    className={`w-10 h-10 rounded-lg bg-glass-bg-hover flex items-center justify-center mb-3`}
-                  >
-                    <Icon className={`w-5 h-5 ${action.color}`} />
-                  </div>
-                  <h3 className="font-heading font-semibold text-text-primary mb-1">
-                    {action.title}
-                  </h3>
-                  <p className="text-text-secondary text-sm">
-                    {action.description}
-                  </p>
-                  <div className="flex items-center gap-1 mt-3 text-echora-lime text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span>Get started</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </div>
-                </motion.div>
-              </Link>
-            );
-          })}
+          )}
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'var(--text-faint)', marginTop: 4 }}>
+            {dateStr}
+          </div>
         </div>
-      </motion.div>
+        <div style={{ display: 'flex', gap: 7 }}>
+          <Link href="/dashboard/library" className="btn-sec" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Add to library</Link>
+          <Link href="/dashboard/canvas" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: 'none', background: 'var(--ember)', color: '#fff', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>New synthesis</Link>
+        </div>
+      </div>
 
-      {/* Recent Activity */}
-      <motion.div variants={item}>
-        <h2 className="font-heading text-lg font-semibold text-text-primary mb-4">
-          Recent Activity
-        </h2>
-        {contentItems && contentItems.length > 0 ? (
-          <div className="space-y-2">
-            {contentItems.slice(0, 5).map((ci) => (
-              <div
-                key={ci._id}
-                className="glass-card px-5 py-3 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-status-info/10 flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-status-info" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-text-primary truncate max-w-[400px]">
-                      {ci.title}
-                    </p>
-                    <p className="text-xs text-text-tertiary capitalize">
-                      {ci.type} · {ci.status}
-                    </p>
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 18 }}>
+        {/* Library items */}
+        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px 18px' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 7 }}>Library items</div>
+          {statsLoading ? (
+            <SkeletonBar width={40} height={28} />
+          ) : (
+            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 5 }}>
+              <span style={{ color: 'var(--ember)' }}>{libraryCount}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Graph connections */}
+        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px 18px' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 7 }}>Graph connections</div>
+          {statsLoading ? (
+            <SkeletonBar width={40} height={28} />
+          ) : (
+            <>
+              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 5 }}>
+                <span style={{ color: 'var(--ember)' }}>0</span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-faint)', lineHeight: 1.4 }}>Builds as your library grows</div>
+            </>
+          )}
+        </div>
+
+        {/* Posts published */}
+        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px 18px' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 7 }}>Posts published</div>
+          {statsLoading ? (
+            <SkeletonBar width={40} height={28} />
+          ) : (
+            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 5 }}>
+              <span style={{ color: 'var(--ember)' }}>{publishedCount}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Avg voice match */}
+        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px 18px' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 7 }}>Avg voice match</div>
+          {statsLoading ? (
+            <SkeletonBar width={40} height={28} />
+          ) : (
+            <>
+              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 5 }}>
+                <span style={{ color: 'var(--text-faint)' }}>–</span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-faint)', lineHeight: 1.4 }}>Train your voice to see this</div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Two column grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {/* Left — Content ideas / empty state */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>
+            Content ideas
+          </div>
+
+          {statsLoading ? (
+            <div style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border)', borderRadius: 10, padding: 20 }}>
+              <SkeletonBar width={200} height={14} />
+              <div style={{ marginTop: 8 }}><SkeletonBar width={280} height={10} /></div>
+            </div>
+          ) : libraryCount >= 3 ? (
+            /* Has enough items — show synthesis prompt */
+            <div style={{
+              background: 'var(--bg-elevated)', border: '0.5px solid var(--border)',
+              borderRadius: 10, padding: 16,
+            }}>
+              <div style={{ fontFamily: "'DM Serif Display', serif", fontStyle: 'italic', fontSize: 14, color: 'var(--text-primary)', marginBottom: 6 }}>
+                You have {libraryCount} research items ready to synthesise
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
+                Open the Canvas to connect your sources and generate content.
+              </div>
+              <Link href="/dashboard/canvas" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '7px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500,
+                cursor: 'pointer', border: 'none', background: 'var(--ember)',
+                color: '#fff', fontFamily: "'Inter', sans-serif", textDecoration: 'none',
+              }}>
+                Open Canvas →
+              </Link>
+            </div>
+          ) : (
+            /* Empty / not enough items — show onboarding prompt */
+            <div style={{
+              background: 'var(--bg-elevated)',
+              border: '1px dashed var(--border)',
+              borderRadius: 10, padding: 20, textAlign: 'center',
+            }}>
+              {/* BookOpen icon */}
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" style={{ margin: '0 auto 10px', display: 'block', opacity: 0.5 }}>
+                <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2V3zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7V3z"/>
+              </svg>
+              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 6 }}>
+                Add research to get started
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 14, maxWidth: 300, margin: '0 auto 14px' }}>
+                Save articles, PDFs, or notes to your library.
+                Once you have 3+ sources, the Canvas will suggest synthesis ideas.
+              </div>
+              <Link href="/dashboard/library" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '7px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500,
+                cursor: 'pointer', border: '0.5px solid var(--border)',
+                background: 'var(--bg-elevated)', color: 'var(--text-primary)',
+                fontFamily: "'Inter', sans-serif", textDecoration: 'none',
+              }}>
+                Add to library →
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Right — Agents + Activity */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>Agent status</div>
+
+            {/* The Authority — LinkedIn */}
+            <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: 18, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 11 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: 'var(--ember-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 16 16" stroke="#FF6B35" strokeWidth="1.5" strokeLinecap="round"><path d="M2 14 C2 9 5 3 12 2"/><path d="M6 14 C6 10 8.5 6 12 5"/><line x1="4" y1="1.5" x2="7" y2="14.5" stroke="#EDE8E0" strokeWidth="1.2"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>The Authority</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    LinkedIn · {postsLoading ? '...' : linkedinDrafts.length > 0 ? `${linkedinDrafts.length} draft${linkedinDrafts.length > 1 ? 's' : ''} pending` : 'No drafts'}
                   </div>
                 </div>
+                {postsLoading ? (
+                  <SkeletonBar width={50} height={18} />
+                ) : linkedinDrafts.length > 0 ? (
+                  <span style={{ display: 'inline-flex', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 20, background: 'rgba(239,159,39,0.1)', color: 'var(--warning)' }}>Awaiting</span>
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 20, background: 'var(--success-muted)', color: 'var(--success)', border: '0.5px solid rgba(29,158,117,0.2)' }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)' }}/>Ready
+                  </span>
+                )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="glass-card p-12 flex flex-col items-center justify-center text-center">
-            <div className="w-14 h-14 rounded-2xl bg-surface-600 flex items-center justify-center mb-4">
-              <BookOpen className="w-6 h-6 text-text-tertiary" />
+              {linkedinDrafts.length > 0 ? (
+                <Link href="/dashboard/agents" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', width: '100%', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Review drafts →</Link>
+              ) : (
+                <Link href="/dashboard/canvas" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', width: '100%', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Generate from Canvas →</Link>
+              )}
             </div>
-            <h3 className="font-heading font-semibold text-text-primary mb-1">
-              No activity yet
-            </h3>
-            <p className="text-text-secondary text-sm max-w-sm mb-5">
-              Start by saving an article, uploading a PDF, or pasting some notes.
-              Your knowledge graph will grow from here.
-            </p>
-            <Link href="/dashboard/library/new">
-              <button className="btn-lime flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Add Your First Content
-              </button>
-            </Link>
+
+            {/* The Catalyst — X */}
+            <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 11 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: 'rgba(55,138,221,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 16 16" stroke="#378ADD" strokeWidth="1.5" strokeLinecap="round"><path d="M2 14 C2 9 5 3 12 2"/><path d="M6 14 C6 10 8.5 6 12 5"/><line x1="4" y1="1.5" x2="7" y2="14.5" stroke="#EDE8E0" strokeWidth="1.2"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>The Catalyst</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    X/Twitter · {postsLoading ? '...' : xDrafts.length > 0 ? `${xDrafts.length} draft${xDrafts.length > 1 ? 's' : ''} pending` : 'No drafts'}
+                  </div>
+                </div>
+                {postsLoading ? (
+                  <SkeletonBar width={50} height={18} />
+                ) : xDrafts.length > 0 ? (
+                  <span style={{ display: 'inline-flex', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 20, background: 'rgba(239,159,39,0.1)', color: 'var(--warning)' }}>Awaiting</span>
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 20, background: 'var(--success-muted)', color: 'var(--success)', border: '0.5px solid rgba(29,158,117,0.2)' }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)' }}/>Ready
+                  </span>
+                )}
+              </div>
+              {xDrafts.length > 0 ? (
+                <Link href="/dashboard/agents" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', width: '100%', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Review drafts →</Link>
+              ) : (
+                <Link href="/dashboard/canvas" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', width: '100%', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Generate from Canvas →</Link>
+              )}
+            </div>
           </div>
-        )}
-      </motion.div>
-    </motion.div>
-  );
+
+          {/* Recent Activity */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>Recent activity</div>
+            <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: 18 }}>
+              {postsLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <SkeletonBar width={260} height={12} />
+                  <SkeletonBar width={200} height={12} />
+                </div>
+              ) : publishedPosts.length > 0 ? (
+                /* Show up to 3 most recent published posts */
+                publishedPosts.slice(0, 3).map((post: { _id: string; body: string; platform: string; publishedAt?: number }, i: number) => (
+                  <div key={post._id} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '9px 0', borderBottom: i < Math.min(publishedPosts.length, 3) - 1 ? '0.5px solid var(--border)' : 'none' }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'var(--success-muted)' }}>
+                      <svg width="12" height="12" fill="none" viewBox="0 0 13 13" stroke="var(--success)" strokeWidth="1.5"><circle cx="6.5" cy="6.5" r="5"/><path d="M4 6.5l2 2 3-3"/></svg>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, flex: 1 }}>
+                      <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Post published</strong> — &quot;{post.body.length > 60 ? post.body.slice(0, 60) + '...' : post.body}&quot; on {post.platform === 'linkedin' ? 'LinkedIn' : 'X'}
+                    </div>
+                    {post.publishedAt && (
+                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'var(--text-faint)' }}>
+                        {formatRelativeTime(post.publishedAt)}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                /* Empty state */
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 0' }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'var(--bg-elevated)' }}>
+                    {/* Zap icon */}
+                    <svg width="12" height="12" fill="none" viewBox="0 0 13 13" stroke="var(--text-faint)" strokeWidth="1.5" strokeLinecap="round"><path d="M7 1L3 7.5h3.5L5.5 12 10 5.5H6.5L7 1z"/></svg>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                    Your activity will appear here once you start publishing.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .btn-sec:hover { border-color: var(--border-hover) !important; background: var(--bg-hover) !important; }
+      `}</style>
+    </div>
+  )
 }

@@ -23,6 +23,8 @@ export default function SignInPage() {
       {/* Right — Clerk sign-in */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <SignIn
+          forceRedirectUrl="/dashboard"
+          fallbackRedirectUrl="/dashboard"
           appearance={{
             elements: {
               rootBox: 'w-full max-w-md',

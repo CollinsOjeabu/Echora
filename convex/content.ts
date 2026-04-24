@@ -68,6 +68,44 @@ export const list = query({
 })
 
 /**
+ * Get a single content item by ID.
+ */
+export const get = query({
+  args: { id: v.id("contentItems") },
+  returns: v.union(
+    v.object({
+      _id: v.id("contentItems"),
+      _creationTime: v.number(),
+      userId: v.id("profiles"),
+      type: v.union(
+        v.literal("article"),
+        v.literal("video"),
+        v.literal("note"),
+        v.literal("tweet"),
+        v.literal("pdf"),
+      ),
+      title: v.string(),
+      url: v.optional(v.string()),
+      rawText: v.optional(v.string()),
+      summary: v.optional(v.string()),
+      tags: v.optional(v.array(v.string())),
+      embeddingId: v.optional(v.string()),
+      status: v.union(
+        v.literal("queued"),
+        v.literal("processing"),
+        v.literal("ready"),
+        v.literal("error"),
+      ),
+      errorMessage: v.optional(v.string()),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id)
+  },
+})
+
+/**
  * Create a new content item (manual note, or queued URL for scraping).
  */
 export const create = mutation({
@@ -117,6 +155,52 @@ export const remove = mutation({
 })
 
 /**
+ * Update a content item with partial fields.
+ */
+export const update = mutation({
+  args: {
+    id: v.id("contentItems"),
+    title: v.optional(v.string()),
+    summary: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    status: v.optional(
+      v.union(
+        v.literal("queued"),
+        v.literal("processing"),
+        v.literal("ready"),
+        v.literal("error"),
+      ),
+    ),
+    rawText: v.optional(v.string()),
+    embeddingId: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError("Not authenticated")
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique()
+    if (!profile) throw new ConvexError("Profile not found")
+
+    const item = await ctx.db.get(args.id)
+    if (!item || item.userId !== profile._id) throw new ConvexError("Item not found")
+
+    const { id, ...updates } = args
+    // Filter out undefined values
+    const patch: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined) patch[key] = value
+    }
+
+    await ctx.db.patch(id, patch)
+    return await ctx.db.get(id)
+  },
+})
+
+/**
  * Search content items by title.
  */
 export const search = query({
@@ -160,3 +244,47 @@ export const search = query({
       .take(20)
   },
 })
+
+/**
+ * Create a content item using Clerk auth (no userId arg needed).
+ * Used by onboarding and other auth-gated flows.
+ */
+export const createFromAuth = mutation({
+  args: {
+    title: v.string(),
+    url: v.optional(v.string()),
+    content: v.optional(v.string()),
+    type: v.union(
+      v.literal("article"),
+      v.literal("video"),
+      v.literal("note"),
+      v.literal("tweet"),
+      v.literal("pdf"),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError("Not authenticated")
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique()
+    if (!profile) throw new ConvexError("Profile not found")
+
+    if (args.title.trim().length === 0) {
+      throw new ConvexError("Title is required")
+    }
+
+    const isNote = args.type === "note"
+    return await ctx.db.insert("contentItems", {
+      userId: profile._id,
+      type: args.type,
+      title: args.title.trim(),
+      url: args.url,
+      rawText: args.content,
+      status: isNote ? "ready" : "queued",
+    })
+  },
+})
+
