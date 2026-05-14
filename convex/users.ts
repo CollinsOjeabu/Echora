@@ -16,7 +16,7 @@ export const getByClerkId = query({
       email: v.string(),
       name: v.optional(v.string()),
       avatarUrl: v.optional(v.string()),
-      plan: v.union(v.literal("free"), v.literal("pro"), v.literal("team")),
+      plan: v.union(v.literal("free"), v.literal("pro"), v.literal("team"), v.literal("internal")),
       onboardedAt: v.optional(v.number()),
       onboardingComplete: v.optional(v.boolean()),
       linkedInUrl: v.optional(v.string()),
@@ -24,11 +24,27 @@ export const getByClerkId = query({
       voiceRawSamples: v.optional(v.array(v.string())),
       voiceProfile: v.optional(
         v.object({
-          tone: v.optional(v.string()),
-          style: v.optional(v.string()),
-          samplePostIds: v.optional(v.array(v.string())),
+          storytelling: v.optional(v.number()),
+          technical: v.optional(v.number()),
+          provocative: v.optional(v.number()),
+          datadriven: v.optional(v.number()),
+          formality: v.optional(v.number()),
+          avgSentenceLength: v.optional(v.number()),
+          usesQuestions: v.optional(v.boolean()),
+          emojiUsage: v.optional(v.string()),
+          signaturePhrases: v.optional(v.array(v.string())),
+          writingPersona: v.optional(v.string()),
+          trainedFrom: v.optional(v.string()),
+          trainingPostCount: v.optional(v.number()),
+          trainedAt: v.optional(v.number()),
         }),
       ),
+      generationsThisMonth: v.optional(v.number()),
+      ingestionsThisMonth: v.optional(v.number()),
+      canvasSessionsThisMonth: v.optional(v.number()),
+      voiceDnaAnalysesThisMonth: v.optional(v.number()),
+      periodResetAt: v.optional(v.number()),
+      theme: v.optional(v.union(v.literal("void"), v.literal("dark"), v.literal("light"))),
     }),
     v.null(),
   ),
@@ -213,13 +229,37 @@ export const updateVoiceProfile = mutation({
   args: {
     profileId: v.id("profiles"),
     voiceProfile: v.object({
-      tone: v.optional(v.string()),
-      style: v.optional(v.string()),
-      samplePostIds: v.optional(v.array(v.string())),
+      storytelling: v.optional(v.number()),
+      technical: v.optional(v.number()),
+      provocative: v.optional(v.number()),
+      datadriven: v.optional(v.number()),
+      formality: v.optional(v.number()),
+      avgSentenceLength: v.optional(v.number()),
+      usesQuestions: v.optional(v.boolean()),
+      emojiUsage: v.optional(v.string()),
+      signaturePhrases: v.optional(v.array(v.string())),
+      writingPersona: v.optional(v.string()),
+      trainedFrom: v.optional(v.string()),
+      trainingPostCount: v.optional(v.number()),
+      trainedAt: v.optional(v.number()),
     }),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError("Not authenticated")
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique()
+    if (!profile) throw new ConvexError("Profile not found")
+
+    // Verify ownership — the caller-specified profileId must match the auth'd user
+    if (args.profileId !== profile._id) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Not authorized to update this profile" })
+    }
+
     await ctx.db.patch(args.profileId, {
       voiceProfile: args.voiceProfile,
     })

@@ -190,7 +190,7 @@ export function Footer() {
               <div style={{width:22,height:22,borderRadius:"50%",background:C.ember,display:"flex",alignItems:"center",justifyContent:"center"}}>
                 <svg viewBox="0 0 12 12" fill="none" width={10} height={10}><path d="M4 10 C4 6 6 3 10 2" stroke="#FF6B35" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.5"/><path d="M6 10 C6 7 7.5 5 10 4" stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" fill="none"/><line x1="5" y1="1.5" x2="7.5" y2="11" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/></svg>
               </div>
-              <span style={{fontSize:12,fontWeight:700,letterSpacing:"0.07em",color:C.cream}}>ECHORA</span>
+              <span style={{fontSize:12,fontWeight:700,letterSpacing:"0.07em",color:C.cream}}>THREADDA</span>
             </div>
             <p style={{fontSize:13,color:C.creamMuted,lineHeight:1.7,maxWidth:200}}>Save research. Synthesise connections. Publish original thought leadership.</p>
             <p style={{fontFamily:"'DM Serif Display',serif",fontStyle:"italic",fontSize:17,color:C.ember,marginTop:18}}>Your research, amplified.</p>
@@ -211,7 +211,7 @@ export function Footer() {
           ))}
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <p style={{fontSize:12,color:"rgba(237,232,224,0.2)"}}>© 2026 Echora. All rights reserved.</p>
+          <p style={{fontSize:12,color:"rgba(237,232,224,0.2)"}}>© 2026 Threadda. All rights reserved.</p>
           <p style={{fontSize:12,color:"rgba(237,232,224,0.2)",fontFamily:"'JetBrains Mono',monospace"}}>Built for creators who have something real to say.</p>
         </div>
       </div>

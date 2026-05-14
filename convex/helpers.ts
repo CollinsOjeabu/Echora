@@ -72,10 +72,29 @@ export const saveVoiceProfile = internalMutation({
 
     if (!profile) return null
 
+    // Parse the JSON string into the typed voiceProfile object
+    let parsed: Record<string, unknown>
+    try {
+      parsed = JSON.parse(args.voiceProfile)
+    } catch {
+      return null
+    }
+
     await ctx.db.patch(profile._id, {
       voiceProfile: {
-        tone: "analyzed",
-        style: args.voiceProfile,
+        storytelling: typeof parsed.storytelling === "number" ? parsed.storytelling : undefined,
+        technical: typeof parsed.technical === "number" ? parsed.technical : undefined,
+        provocative: typeof parsed.provocative === "number" ? parsed.provocative : undefined,
+        datadriven: typeof parsed.datadriven === "number" ? parsed.datadriven : undefined,
+        formality: typeof parsed.formality === "number" ? parsed.formality : undefined,
+        avgSentenceLength: typeof parsed.avgSentenceLength === "number" ? parsed.avgSentenceLength : undefined,
+        usesQuestions: typeof parsed.usesQuestions === "boolean" ? parsed.usesQuestions : undefined,
+        emojiUsage: typeof parsed.emojiUsage === "string" ? parsed.emojiUsage : undefined,
+        signaturePhrases: Array.isArray(parsed.signaturePhrases) ? parsed.signaturePhrases as string[] : undefined,
+        writingPersona: typeof parsed.writingPersona === "string" ? parsed.writingPersona : undefined,
+        trainedFrom: typeof parsed.trainedFrom === "string" ? parsed.trainedFrom : undefined,
+        trainingPostCount: typeof parsed.trainingPostCount === "number" ? parsed.trainingPostCount : undefined,
+        trainedAt: typeof parsed.trainedAt === "number" ? parsed.trainedAt : undefined,
       },
     })
     return null
@@ -126,12 +145,8 @@ export const getVoiceProfile = query({
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique()
 
-    if (!profile?.voiceProfile?.style) return null
+    if (!profile?.voiceProfile) return null
 
-    try {
-      return JSON.parse(profile.voiceProfile.style)
-    } catch {
-      return null
-    }
+    return profile.voiceProfile
   },
 })

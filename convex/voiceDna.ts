@@ -26,6 +26,12 @@ export const analyzeManualSamples = action({
       throw new ConvexError("Add at least 2 writing samples for analysis.")
     }
 
+    // Rate-limit check: voiceDnaAnalyses
+    await ctx.runMutation(internal.rateLimitHelpers.checkAndIncrementCounter, {
+      profileId: profile._id,
+      resource: "voiceDnaAnalyses",
+    })
+
     const samples = profile.voiceRawSamples
     const samplesText = samples.map((s: string, i: number) => `SAMPLE ${i + 1}:\n${s}`).join("\n\n---\n\n")
 

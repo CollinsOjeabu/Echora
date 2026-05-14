@@ -34,7 +34,7 @@ const tiles = [
     col:2, badge:"Core feature",
     icon: null,
     title:"Synthesis canvas — the differentiator",
-    desc:"Drag 3–6 saved sources onto the canvas. Echora maps the connections and surfaces insights you'd never have made alone. Every post is built from that synthesis — not from a blank prompt.",
+    desc:"Drag 3–6 saved sources onto the canvas. Threadda maps the connections and surfaces insights you'd never have made alone. Every post is built from that synthesis — not from a blank prompt.",
     bars:true,
   },
   {
@@ -57,7 +57,7 @@ const tiles = [
   {
     col:1, icon:<svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" strokeWidth="1.5" strokeLinecap="round" width={16} height={16}><path d="M8 2a5 5 0 100 10 5 5 0 000-10z"/><path d="M6 12v2M10 12v2M6 14h4"/><line x1="8" y1="5" x2="8" y2="9"/></svg>,
     title:"Future content ideas",
-    desc:"Echora proactively surfaces post ideas in your voice — based on what you've saved, what's performed, and what's trending in your niche.",
+    desc:"Threadda proactively surfaces post ideas in your voice — based on what you've saved, what's performed, and what's trending in your niche.",
   },
   {
     col:1, icon:null, avatars:true,

@@ -27,6 +27,12 @@ export const startIngestion = action({
       throw new ConvexError("Invalid URL. Must start with http:// or https://")
     }
 
+    // Step 1a: Rate-limit check: ingestions
+    await ctx.runMutation(internal.rateLimitHelpers.checkAndIncrementCounter, {
+      profileId: args.userId,
+      resource: "ingestions",
+    })
+
     // Step 2: Scrape with Firecrawl v2 API
     const Firecrawl = (await import("@mendable/firecrawl-js")).default
     const firecrawl = new Firecrawl({
@@ -104,8 +110,29 @@ export const startIngestion = action({
       title: String(title).slice(0, 200),
       rawText,
       summary,
-      embeddingId: embeddingStr,
+      embeddingId: embeddingStr, // legacy field — kept for backward compat
     })
+
+    // Step 7: Store embedding in dedicated vector table + schedule edge compute
+    if (embeddingStr) {
+      try {
+        const embeddingVector: number[] = JSON.parse(embeddingStr)
+        await ctx.runMutation(internal.embeddings.storeEmbedding, {
+          contentItemId: itemId,
+          userId: args.userId,
+          vector: embeddingVector,
+        })
+
+        // Schedule edge computation (fire-and-forget, 100ms delay so embedding commits first)
+        await ctx.scheduler.runAfter(100, internal.graphCompute.computeEdgesForSource, {
+          contentItemId: itemId,
+        })
+      } catch (e) {
+        // Non-blocking — embedding table write or edge compute failure
+        // does not break ingestion
+        console.error("Failed to store embedding or schedule edge compute:", e)
+      }
+    }
 
     return { success: true, title: String(title), summary, itemId }
   },

@@ -34,22 +34,25 @@ export const sendMessage = action({
     const profile = await ctx.runQuery(internal.helpers.getProfileByClerkId, {
       clerkId: identity.subject,
     })
-    const displayName = profile?.name ?? "the user"
+    if (!profile) throw new ConvexError("Profile not found")
+    const displayName = profile.name ?? "the user"
+
+    // 3a. Rate-limit check: generations
+    await ctx.runMutation(internal.rateLimitHelpers.checkAndIncrementCounter, {
+      profileId: profile._id,
+      resource: "generations",
+    })
 
     let voiceContext = ""
-    if (profile?.voiceProfile?.style) {
-      try {
-        const vp = JSON.parse(profile.voiceProfile.style)
-        const traits: string[] = []
-        if (vp.storytelling >= 60) traits.push("storytelling")
-        if (vp.technical >= 60) traits.push("technical depth")
-        if (vp.provocative >= 60) traits.push("provocative takes")
-        if (vp.datadriven >= 60) traits.push("data-driven arguments")
-        const top2 = traits.slice(0, 2).join(" and ") || "clarity and directness"
-        voiceContext = `\n\nVoice context for ${displayName}:\n${vp.writingPersona ?? "Professional communicator"}\nLean toward: ${top2}`
-      } catch {
-        // Voice profile unparseable, skip
-      }
+    if (profile?.voiceProfile) {
+      const vp = profile.voiceProfile
+      const traits: string[] = []
+      if ((vp.storytelling ?? 0) >= 60) traits.push("storytelling")
+      if ((vp.technical ?? 0) >= 60) traits.push("technical depth")
+      if ((vp.provocative ?? 0) >= 60) traits.push("provocative takes")
+      if ((vp.datadriven ?? 0) >= 60) traits.push("data-driven arguments")
+      const top2 = traits.slice(0, 2).join(" and ") || "clarity and directness"
+      voiceContext = `\n\nVoice context for ${displayName}:\n${vp.writingPersona ?? "Professional communicator"}\nLean toward: ${top2}`
     }
 
     // 4. Build conversation history for Claude
@@ -67,19 +70,22 @@ export const sendMessage = action({
     claudeMessages.push({ role: "user", content: args.message })
 
     // 5. Build system prompt
-    const systemPrompt = `You are The Authority, a LinkedIn content strategist working with ${displayName} to develop original content from their research.
+    const systemPrompt = `You are The Authority, a sharp, focused creative collaborator working with ${displayName} on LinkedIn content. You help find angles, test ideas, and draft posts.
 
-Your job is to be a sharp, focused creative collaborator — not an analyst, not an explainer, not a summariser. You help the user find angles, test ideas, and eventually draft content.
+VOICE AND FORMATTING:
+Write the way a thoughtful colleague speaks — conversational, direct, with a clear point of view. Most responses should be plain prose: short paragraphs, no headings, no bullet points. Reserve formatting for two cases only:
+1. When the user explicitly asks for distinct items (e.g., "give me three angles") — present each as a numbered item with a brief expansion.
+2. When you are drafting actual post content — format that draft naturally for LinkedIn.
 
-RULES:
-- Respond conversationally. Short paragraphs, plain language.
-- NEVER use markdown formatting in your responses. No asterisks, no bold, no bullet points with dashes, no headers with ##. Write in plain prose only.
-- NEVER comment on the quality, completeness, or credibility of sources. Work with what you have — always.
-- NEVER say things like "this appears to be", "I should note that", "it's worth mentioning", "as an AI". Just respond.
-- Keep responses under 120 words unless you are drafting actual post content.
-- When asked for angles or ideas, give 2-3 specific, opinionated options. Not vague suggestions — concrete angles with a point of view.
-- When asked to draft content, write the full draft. No preamble, no explanation after. Just the draft.
-- Match the energy of the conversation. If the user is exploring, explore with them. If they want a draft, deliver it clean.
+For everything else, write in flowing prose. When connecting multiple thoughts, use sentence-starters like "First," "What stands out next," "And the deeper point" — never bullet syntax. Vary sentence length. Don't hedge with "great question" or "let me think about this." Just respond.
+
+CONVERSATION RULES:
+- Keep responses under 120 words unless drafting a full post
+- Match the user's energy: if they're exploring, explore with them; if they want a draft, deliver it clean
+- When asked for angles, give 2-3 specific opinionated options with a clear point of view — never vague suggestions
+- When asked to draft, write the full draft with no preamble before or explanation after
+- Never comment on source quality, completeness, or credibility — work with what you have
+- Never say "this appears to be," "I should note that," "it's worth mentioning," "as an AI" — just respond
 
 The user has loaded these research sources:
 

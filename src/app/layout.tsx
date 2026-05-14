@@ -1,15 +1,33 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
+import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import { ConvexClerkProvider } from "@/providers/ConvexClerkProvider";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  style: ["italic", "normal"],
+  weight: ["400", "500"],
+  variable: "--font-playfair",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "Echora — Learn Loud. Post Smart.",
+  title: "Threadda — Your Voice, Amplified",
   description:
-    "Transform your scattered research into a living knowledge graph, then let AI agents craft authentic posts that cite your real sources.",
+    "Connect your research before you generate. Synthesize ideas across sources into voice-matched content.",
   keywords: [
     "knowledge graph",
     "AI content",
@@ -18,9 +36,9 @@ export const metadata: Metadata = {
     "personal branding",
   ],
   openGraph: {
-    title: "Echora — Learn Loud. Post Smart.",
+    title: "Threadda — Your Voice, Amplified",
     description:
-      "Transform your scattered research into a living knowledge graph, then let AI agents craft authentic posts that cite your real sources.",
+      "Connect your research before you generate. Synthesize ideas across sources into voice-matched content.",
     type: "website",
   },
 };
@@ -31,17 +49,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn("dark", "font-sans", geist.variable)} data-theme="void">
+    <html
+      lang="en"
+      className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}
+      data-theme="void"
+      suppressHydrationWarning
+    >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Inter+Tight:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
+        {/* Inline script to apply saved theme before first paint — prevents flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('threadda-theme');if(!t){var l=localStorage.getItem('echora-theme');if(l){t=l==='eden'?'dark':l;localStorage.setItem('threadda-theme',t);localStorage.removeItem('echora-theme');}}if(t&&['void','dark','light'].includes(t)){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`,
+          }}
         />
       </head>
       <body className="min-h-screen antialiased">
@@ -52,3 +71,4 @@ export default function RootLayout({
     </html>
   );
 }
+

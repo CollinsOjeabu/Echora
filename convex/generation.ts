@@ -39,6 +39,17 @@ Their voice profile:
 You write on behalf of ${displayName}.
 ${voiceSection}
 
+OUTPUT FORMAT:
+Your output is rendered directly to LinkedIn as plain text. LinkedIn does NOT render markdown. Do not use any markdown syntax in your output:
+- No asterisks for bold or italics
+- No ## or # for headings
+- No --- or *** for separators
+- No backticks for code
+- No > for quotes
+- No bullet points with - or *
+
+The only formatting LinkedIn renders is line breaks. Use single newlines between paragraphs and double newlines for visual spacing.
+
 LinkedIn post rules:
 - Max 3000 characters
 - No more than 5 hashtags, placed at the very end
@@ -46,10 +57,10 @@ LinkedIn post rules:
 - Uses line breaks between paragraphs (LinkedIn renders them)
 - Ends with a question or provocation that invites comments
 - Voice match target: sound exactly like ${displayName}, not like AI
-- Use short paragraphs (1–3 sentences max) — LinkedIn rewards whitespace
+- Use short paragraphs (1-3 sentences max) — LinkedIn rewards whitespace
 - Include a clear insight or framework the reader can use immediately
 - Never use corporate jargon: "synergy", "leverage", "align", "circle back"
-- Target 150–250 words (LinkedIn sweet spot)
+- Target 150-250 words (LinkedIn sweet spot)
 
 You MUST also self-assess how closely the output matches ${displayName}'s voice.`
 }
@@ -70,9 +81,18 @@ Their voice profile:
 You write on behalf of ${displayName}.
 ${voiceSection}
 
+OUTPUT FORMAT:
+Your output is rendered directly to X/Twitter as plain text. X does NOT render markdown. Do not use any markdown syntax in your output:
+- No asterisks for bold or italics
+- No ## or # for headings
+- No --- or *** for separators
+- No backticks for code
+- No > for quotes
+- No bullet points with - or *
+
 X/Twitter post rules:
 - Max 280 characters for a single tweet
-- If content warrants it, write a thread: number each tweet [1/N], [2/N] etc.
+- If content warrants a thread: number each tweet [1/N], [2/N] etc.
 - Punchy, declarative opening
 - No filler phrases ("In conclusion", "It's important to note")
 - Max 2 hashtags total
@@ -81,16 +101,12 @@ X/Twitter post rules:
 You MUST also self-assess how closely the output matches ${displayName}'s voice.`
 }
 
-/* ── Parse voice profile from stored schema ── */
+/* ── Read voice profile from typed schema ── */
 function parseVoiceProfile(profile: {
-  voiceProfile?: { tone?: string; style?: string; samplePostIds?: string[] } | undefined
+  voiceProfile?: VoiceDna | undefined
 }): VoiceDna | null {
-  if (!profile?.voiceProfile?.style) return null
-  try {
-    return JSON.parse(profile.voiceProfile.style) as VoiceDna
-  } catch {
-    return null
-  }
+  if (!profile?.voiceProfile) return null
+  return profile.voiceProfile
 }
 
 /* ── JSON parsing helper ── */
@@ -137,6 +153,12 @@ export const generatePost = action({
 
     const displayName = profile.name ?? "the user"
     const voice = parseVoiceProfile(profile)
+
+    // 3a. Rate-limit check: generations
+    await ctx.runMutation(internal.rateLimitHelpers.checkAndIncrementCounter, {
+      profileId: profile._id,
+      resource: "generations",
+    })
 
     // 4. Build agent-specific system prompt
     const systemPrompt = args.agent === "authority"
@@ -265,6 +287,12 @@ export const regeneratePost = action({
     // 3. Get voice profile
     const displayName = profile.name ?? "the user"
     const voice = parseVoiceProfile(profile)
+
+    // 2a. Rate-limit check: generations
+    await ctx.runMutation(internal.rateLimitHelpers.checkAndIncrementCounter, {
+      profileId: profile._id,
+      resource: "generations",
+    })
 
     const systemPrompt = existingPost.agent === "authority"
       ? buildAuthorityPrompt(displayName, voice)

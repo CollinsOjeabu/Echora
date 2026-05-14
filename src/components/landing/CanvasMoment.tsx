@@ -40,7 +40,7 @@ export default function CanvasMoment() {
               <div style={{display:"flex",gap:6}}>
                 {["#E24B4A","#EF9F27","#1D9E75"].map((bg,i) => <div key={i} style={{width:10,height:10,borderRadius:"50%",background:bg,opacity:0.6}}/>)}
               </div>
-              <div style={{flex:1,background:"rgba(237,232,224,0.04)",border:"0.5px solid rgba(237,232,224,0.08)",borderRadius:6,padding:"4px 12px",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:"rgba(237,232,224,0.25)",textAlign:"center"}}>app.echora.co/canvas</div>
+              <div style={{flex:1,background:"rgba(237,232,224,0.04)",border:"0.5px solid rgba(237,232,224,0.08)",borderRadius:6,padding:"4px 12px",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:"rgba(237,232,224,0.25)",textAlign:"center"}}>app.threadda.com/canvas</div>
               <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:C.success}}>● 5 sources loaded</div>
             </div>
 
@@ -49,7 +49,7 @@ export default function CanvasMoment() {
               {/* Sidebar */}
               <div style={{background:"#070E09",borderRight:`0.5px solid ${C.border}`,padding:"18px 0",display:"flex",flexDirection:"column"}}>
                 <div style={{padding:"0 18px 18px",borderBottom:`0.5px solid ${C.border}`,marginBottom:14}}>
-                  <div style={{fontFamily:"'DM Serif Display',serif",fontSize:17,color:C.ember,fontStyle:"italic"}}>Echora</div>
+                  <div style={{fontFamily:"'DM Serif Display',serif",fontSize:17,color:C.ember,fontStyle:"italic"}}>Threadda</div>
                   <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:9,color:"rgba(237,232,224,0.2)",letterSpacing:"0.1em",textTransform:"uppercase"}}>Synthesis Canvas</div>
                 </div>
                 {["Canvas","Library","Graph","Agents"].map((item,i) => (

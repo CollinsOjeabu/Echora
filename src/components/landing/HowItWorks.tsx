@@ -29,7 +29,7 @@ const steps = [
     num:"02 ← the magic", featured:true,
     icon:<svg fill="none" viewBox="0 0 16 16" stroke="#FF6B35" strokeWidth="1.5" strokeLinecap="round" width={16} height={16}><circle cx="4" cy="4" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="8" cy="12" r="2"/><line x1="6" y1="4" x2="10" y2="4"/><line x1="5" y1="6" x2="7.5" y2="10"/><line x1="11" y1="6" x2="8.5" y2="10"/></svg>,
     title:"Bring sources to the canvas",
-    desc:"Select 3–6 saved pieces, bring them to the canvas. Echora maps the connections between them — ideas you'd never have joined alone surface instantly.",
+    desc:"Select 3–6 saved pieces, bring them to the canvas. Threadda maps the connections between them — ideas you'd never have joined alone surface instantly.",
   },
   {
     num:"03", featured:false,

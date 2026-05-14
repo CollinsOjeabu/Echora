@@ -15,13 +15,13 @@ function Reveal({ children, style }: { children: React.ReactNode; style?: React.
 }
 
 const testimonials1 = [
-  { text:"The canvas is the thing. I've been saving research for years — Echora is the first tool that actually makes me use it.", name:"Sarah R.", role:"Founder, B2B SaaS", av:"SR", match:"94% voice" },
+  { text:"The canvas is the thing. I've been saving research for years — Threadda is the first tool that actually makes me use it.", name:"Sarah R.", role:"Founder, B2B SaaS", av:"SR", match:"94% voice" },
   { text:"I used to read 20 articles a week and publish nothing. Now my research actually becomes content. The synthesis step is what was missing.", name:"Marcus T.", role:"Growth Consultant", av:"MT", match:"91% voice" },
   { text:"The voice match is real. First time I've seen 94% and actually agreed. It's not just my writing style — it pulled from specific things I've saved.", name:"Amara O.", role:"LinkedIn Creator, 40K", av:"AO", match:"91% voice" },
   { text:"The scheduling and analytics closed the loop for me. I can see exactly which research sources drove engagement.", name:"James K.", role:"CEO, Tech Startup", av:"JK", match:"89% voice" },
 ];
 const testimonials2 = [
-  { text:"Stopped using Taplio after one week. Their tool writes from nothing. Echora writes from everything I've already researched.", name:"David L.", role:"Founder, Agency", av:"DL", match:"96% voice" },
+  { text:"Stopped using Taplio after one week. Their tool writes from nothing. Threadda writes from everything I've already researched.", name:"David L.", role:"Founder, Agency", av:"DL", match:"96% voice" },
   { text:"The future content ideas feature is wild. It looks at my saved library and tells me what I should write about next.", name:"Rahul K.", role:"Investor & Writer", av:"RK", match:"93% voice" },
   { text:"I was skeptical until I saw the synthesis canvas. Pulling 5 pieces of research together and watching connections emerge — truly new.", name:"Priya N.", role:"Product Manager", av:"PN", match:"92% voice" },
   { text:"Analytics finally tied to source material. I know which articles drove my best performing posts. Worth the subscription alone.", name:"Lisa M.", role:"CMO, Series B", av:"LM", match:"88% voice" },

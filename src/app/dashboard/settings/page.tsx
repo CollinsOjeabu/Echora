@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useMutation, useAction } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useTheme } from '@/components/providers/ThemeProvider'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,9 +47,9 @@ const PLANS = [
 
 /* ─── Theme data ─── */
 const THEMES = [
-  { id: 'void', name: 'Void', bg: '#070E09', accent: '#FF6B35', text: '#EDE8E0' },
-  { id: 'eden', name: 'Eden Dark', bg: '#222222', accent: '#FF6B35', text: '#E8E8E8' },
-  { id: 'light', name: 'Light', bg: '#F6F6F4', accent: '#FF6B35', text: '#1A1A1A' },
+  { id: 'void' as const, name: 'Void', bg: '#070E09', accent: '#FF6B35', text: '#EDE8E0' },
+  { id: 'dark' as const, name: 'Dark', bg: '#1A1A1A', accent: '#FF6B35', text: '#D9DCD8' },
+  { id: 'light' as const, name: 'Light', bg: '#F6F6F4', accent: '#FF6B35', text: '#141414' },
 ]
 
 export default function SettingsPage() {
@@ -127,17 +128,8 @@ export default function SettingsPage() {
   const [toggles, setToggles] = useState({ auto: false, daily: true, weekly: true, discovery: false })
   const toggle = (key: keyof typeof toggles) => setToggles(p => ({ ...p, [key]: !p[key] }))
 
-  /* ─── Theme state ─── */
-  const [theme, setTheme] = useState('void')
-  useEffect(() => {
-    const saved = localStorage.getItem('echora-theme')
-    if (saved) setTheme(saved)
-  }, [])
-  const handleTheme = (t: string) => {
-    setTheme(t)
-    document.documentElement.setAttribute('data-theme', t)
-    localStorage.setItem('echora-theme', t)
-  }
+  /* ─── Theme state (from ThemeProvider + Convex) ─── */
+  const { theme, setTheme: handleTheme } = useTheme()
 
   /* ─── Derived ─── */
   const displayName = profile?.name ?? ''
@@ -247,13 +239,13 @@ export default function SettingsPage() {
                       <hr className="border-t border-[var(--border)] my-4" />
 
                       <div className="text-sm font-semibold text-[var(--text-primary)] mb-0.5">Preferences</div>
-                      <div className="text-xs text-[var(--text-muted)] mb-3.5">How Echora behaves for you.</div>
+                      <div className="text-xs text-[var(--text-muted)] mb-3.5">How Threadda behaves for you.</div>
 
                       {([
                         { key: 'auto' as const, label: 'Auto-approve drafts above 90% voice match', sub: 'High-scoring drafts queue automatically' },
                         { key: 'daily' as const, label: 'Daily idea notifications', sub: 'Get notified when content ideas surface' },
                         { key: 'weekly' as const, label: 'Weekly analytics digest', sub: 'Summary of best posts and sources' },
-                        { key: 'discovery' as const, label: 'Research discovery mode', sub: 'Echora suggests new sources from your graph' },
+                        { key: 'discovery' as const, label: 'Research discovery mode', sub: 'Threadda suggests new sources from your graph' },
                       ]).map((row, i) => (
                         <div key={i} className="flex items-center justify-between py-2.5" style={{ borderBottom: i < 3 ? '0.5px solid var(--border)' : 'none' }}>
                           <div>
@@ -321,13 +313,10 @@ export default function SettingsPage() {
                         <div className="mt-5">
                           <div className="text-xs font-semibold text-[var(--text-muted)] mb-2.5">Current Voice Profile</div>
                           <div className="text-[13px] text-[var(--text-primary)] mb-1">Status: Analyzed ✓</div>
-                          {profile.voiceProfile.style && (
+                          {profile.voiceProfile.writingPersona && (
                             <div className="text-[12px] text-[var(--text-muted)] mt-1 whitespace-pre-wrap max-h-32 overflow-y-auto"
                               style={{ background: 'var(--bg-elevated)', padding: 10, borderRadius: 8, border: '0.5px solid var(--border)', lineHeight: 1.6 }}>
-                              {(() => {
-                                try { return (JSON.parse(profile.voiceProfile.style) as Record<string, unknown>).writingPersona as string || profile.voiceProfile.style }
-                                catch { return profile.voiceProfile.style }
-                              })()}
+                              {profile.voiceProfile.writingPersona}
                             </div>
                           )}
                         </div>
@@ -521,7 +510,7 @@ export default function SettingsPage() {
               {activeTab === 'appearance' && (
                 <div>
                   <div className="text-sm font-semibold text-[var(--text-primary)] mb-0.5">Theme</div>
-                  <div className="text-xs text-[var(--text-muted)] mb-5">Choose how Echora looks for you.</div>
+                  <div className="text-xs text-[var(--text-muted)] mb-5">Choose how Threadda looks for you.</div>
 
                   <div className="grid grid-cols-3 gap-3">
                     {THEMES.map((t) => {

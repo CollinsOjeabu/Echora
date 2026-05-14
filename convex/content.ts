@@ -1,4 +1,5 @@
 import { query, mutation } from "./_generated/server"
+import { internal } from "./_generated/api"
 import { v } from "convex/values"
 import { ConvexError } from "convex/values"
 
@@ -125,6 +126,20 @@ export const create = mutation({
   },
   returns: v.id("contentItems"),
   handler: async (ctx, args) => {
+    // Verify auth + ownership of the userId
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError("Not authenticated")
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique()
+    if (!profile) throw new ConvexError("Profile not found")
+
+    if (args.userId !== profile._id) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Not authorized to create content for this user" })
+    }
+
     if (args.title.trim().length === 0) {
       throw new ConvexError({ code: "VALIDATION", message: "Title is required" })
     }
@@ -149,6 +164,36 @@ export const remove = mutation({
   args: { contentId: v.id("contentItems") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // 1. Get authenticated profile
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new ConvexError("Not authenticated")
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique()
+    if (!profile) throw new ConvexError("Profile not found")
+
+    // 2. Verify ownership
+    const content = await ctx.db.get(args.contentId)
+    if (!content) {
+      throw new ConvexError({ code: "NOT_FOUND", message: "Content item not found" })
+    }
+    if (content.userId !== profile._id) {
+      throw new ConvexError({ code: "FORBIDDEN", message: "Not authorized to delete this content" })
+    }
+
+    // 3. Clean up graph edges referencing this content item
+    await ctx.scheduler.runAfter(0, internal.graphEdges.deleteEdgesForSource, {
+      sourceId: args.contentId,
+    })
+
+    // 4. Clean up the embedding row for this content item
+    await ctx.scheduler.runAfter(0, internal.embeddings.deleteEmbeddingForContentItem, {
+      contentItemId: args.contentId,
+    })
+
+    // 5. Delete the content item
     await ctx.db.delete(args.contentId)
     return null
   },

@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server"
 import { v } from "convex/values"
 import { ConvexError } from "convex/values"
+import { gateMutation } from "./lib/rateLimit"
 
 /**
  * Create a new canvas session with selected sources.
@@ -20,6 +21,9 @@ export const createSession = mutation({
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique()
     if (!profile) throw new ConvexError("Profile not found")
+
+    // Rate-limit check: canvasSessions
+    await gateMutation(ctx, profile._id, "canvasSessions")
 
     return await ctx.db.insert("canvasSessions", {
       userId: profile._id,

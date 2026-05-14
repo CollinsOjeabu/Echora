@@ -2,308 +2,193 @@
 
 import Link from 'next/link'
 import { useQuery } from 'convex/react'
+import { useAction } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useState, useEffect } from 'react'
 
-function SkeletonBar({ width, height }: { width: number; height: number }) {
-  return (
-    <div style={{
-      width, height, borderRadius: 4,
-      background: 'var(--bg-elevated)',
-      animation: 'pulse 1.5s ease-in-out infinite',
-    }} />
-  )
+function Skel({ w, h }: { w: number; h: number }) {
+  return <div style={{ width: w, height: h, borderRadius: 4, background: 'var(--bg-elevated)', animation: 'pulse 1.5s ease-in-out infinite' }} />
 }
 
-function formatRelativeTime(timestamp: number): string {
-  const diff = Date.now() - timestamp
-  const minutes = Math.floor(diff / 60000)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h`
-  const days = Math.floor(hours / 24)
-  return `${days}d`
+function timeAgo(ts: number): string {
+  const d = Date.now() - ts
+  const m = Math.floor(d / 60000)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
 }
 
 export default function DashboardHome() {
   const { profile, isLoading: userLoading } = useCurrentUser()
+  const contentItems = useQuery(api.content.list, profile?._id ? { userId: profile._id } : 'skip')
+  const agentPosts = useQuery(api.posts.list, profile?._id ? { userId: profile._id } : 'skip')
 
-  // Queries — skip until profile is loaded
-  const contentItems = useQuery(
-    api.content.list,
-    profile?._id ? { userId: profile._id } : 'skip'
-  )
-  const agentPosts = useQuery(
-    api.posts.list,
-    profile?._id ? { userId: profile._id } : 'skip'
-  )
+  // Content ideas
+  const [ideas, setIdeas] = useState<Array<{ title: string; sourceCount: number; agent: string; sourceIds: string[] }>>([])
+  const [ideasLoading, setIdeasLoading] = useState(false)
+  const generateIdeas = useAction(api.ideas.getForUser)
 
-  // Derived data
+  useEffect(() => {
+    if (profile?._id && contentItems && contentItems.length >= 1 && ideas.length === 0 && !ideasLoading) {
+      setIdeasLoading(true)
+      generateIdeas().then((r) => { setIdeas(r); setIdeasLoading(false) }).catch(() => setIdeasLoading(false))
+    }
+  }, [profile?._id, contentItems, ideas.length, ideasLoading, generateIdeas])
+
   const firstName = profile?.name?.split(' ')[0] ?? ''
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const dateStr = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
-  // Stats
   const libraryCount = contentItems?.length ?? 0
-  const publishedPosts = agentPosts?.filter((p: { status: string }) => p.status === 'published') ?? []
-  const publishedCount = publishedPosts.length
+  const publishedPosts = agentPosts?.filter((p: any) => p.status === 'published') ?? []
+  const pendingDrafts = agentPosts?.filter((p: any) => p.status === 'draft' || p.status === 'review') ?? []
+  const linkedinDrafts = pendingDrafts.filter((p: any) => p.platform === 'linkedin')
+  const xDrafts = pendingDrafts.filter((p: any) => p.platform === 'x')
+  const scoredPosts = agentPosts?.filter((p: any) => typeof p.voiceMatchScore === 'number') ?? []
+  const avgVoice = scoredPosts.length > 0 ? Math.round(scoredPosts.reduce((s: number, p: any) => s + p.voiceMatchScore, 0) / scoredPosts.length) : null
 
-  // Agent drafts
-  const pendingDrafts = agentPosts?.filter((p: { status: string }) => p.status === 'draft' || p.status === 'review') ?? []
-  const linkedinDrafts = pendingDrafts.filter((p: { platform: string }) => p.platform === 'linkedin')
-  const xDrafts = pendingDrafts.filter((p: { platform: string }) => p.platform === 'x')
+  const loading = contentItems === undefined || agentPosts === undefined
 
-  // Loading states
-  const statsLoading = contentItems === undefined || agentPosts === undefined
-  const postsLoading = agentPosts === undefined
+  // Build activity timeline
+  const activities: Array<{ icon: string; text: string; bold: string; time: number }> = []
+  if (agentPosts) {
+    for (const p of agentPosts) {
+      if (p.status === 'draft') activities.push({ icon: 'bolt', bold: p.agent === 'authority' ? 'The Authority' : 'The Catalyst', text: ` generated a draft from ${p.sourceContentIds.length} sources`, time: p._creationTime })
+      if (p.status === 'approved') activities.push({ icon: 'check', bold: 'Draft approved', text: ' — queued for publishing', time: p._creationTime })
+      if (p.status === 'scheduled' && p.scheduledAt) activities.push({ icon: 'cal', bold: 'Post scheduled', text: ` for ${new Date(p.scheduledAt).toLocaleDateString()}`, time: p._creationTime })
+    }
+  }
+  if (contentItems) {
+    for (const c of contentItems.slice(0, 3)) {
+      activities.push({ icon: 'plus', bold: `"${c.title.slice(0, 40)}"`, text: ' added to library', time: c._creationTime })
+    }
+  }
+  activities.sort((a, b) => b.time - a.time)
 
   return (
     <div style={{ animation: 'fadeIn 0.18s ease' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          {userLoading ? (
-            <SkeletonBar width={180} height={24} />
-          ) : (
-            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 21, color: 'var(--text-primary)', marginBottom: 2 }}>
-              {greeting}, <em style={{ color: 'var(--ember)', fontStyle: 'italic' }}>{firstName}.</em>
-            </div>
-          )}
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'var(--text-faint)', marginTop: 4 }}>
-            {dateStr}
+      {/* Greeting */}
+      <div style={{ marginBottom: 20 }}>
+        {userLoading ? <Skel w={200} h={24} /> : (
+          <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text-primary)', fontFamily: "'Inter', sans-serif" }}>
+            {greeting}, <em style={{ color: 'var(--ember)', fontStyle: 'italic', fontFamily: "'DM Serif Display', serif" }}>{firstName}.</em>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: 7 }}>
-          <Link href="/dashboard/library" className="btn-sec" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Add to library</Link>
-          <Link href="/dashboard/canvas" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: 'none', background: 'var(--ember)', color: '#fff', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>New synthesis</Link>
-        </div>
+        )}
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, fontFamily: "'Inter', sans-serif" }}>{dateStr}</div>
       </div>
 
-      {/* Stats */}
+      {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 18 }}>
-        {/* Library items */}
-        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px 18px' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 7 }}>Library items</div>
-          {statsLoading ? (
-            <SkeletonBar width={40} height={28} />
-          ) : (
-            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 5 }}>
-              <span style={{ color: 'var(--ember)' }}>{libraryCount}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Graph connections */}
-        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px 18px' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 7 }}>Graph connections</div>
-          {statsLoading ? (
-            <SkeletonBar width={40} height={28} />
-          ) : (
-            <>
-              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 5 }}>
-                <span style={{ color: 'var(--ember)' }}>0</span>
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text-faint)', lineHeight: 1.4 }}>Builds as your library grows</div>
-            </>
-          )}
-        </div>
-
-        {/* Posts published */}
-        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px 18px' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 7 }}>Posts published</div>
-          {statsLoading ? (
-            <SkeletonBar width={40} height={28} />
-          ) : (
-            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 5 }}>
-              <span style={{ color: 'var(--ember)' }}>{publishedCount}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Avg voice match */}
-        <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: '16px 18px' }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 7 }}>Avg voice match</div>
-          {statsLoading ? (
-            <SkeletonBar width={40} height={28} />
-          ) : (
-            <>
-              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 30, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 5 }}>
-                <span style={{ color: 'var(--text-faint)' }}>–</span>
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text-faint)', lineHeight: 1.4 }}>Train your voice to see this</div>
-            </>
-          )}
-        </div>
+        <StatCard label="Library items" value={loading ? null : String(libraryCount)} />
+        <StatCard label="Graph connections" value={loading ? null : '0'} sub="Builds as your library grows" />
+        <StatCard label="Posts published" value={loading ? null : String(publishedPosts.length)} />
+        <StatCard label="Avg voice match" value={loading ? null : avgVoice !== null ? `${avgVoice}%` : '—'} sub={avgVoice === null ? 'Train your voice to see this' : undefined} />
       </div>
 
-      {/* Two column grid */}
+      {/* Two-column grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        {/* Left — Content ideas / empty state */}
+        {/* Left — Content Ideas */}
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>
-            Content ideas
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, fontFamily: "'Inter', sans-serif" }}>Content ideas</span>
+            {ideas.length > 0 && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 9, color: 'var(--text-faint)' }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--ember)', animation: 'pulse 2s infinite' }} />
+                agents thinking
+              </span>
+            )}
           </div>
 
-          {statsLoading ? (
-            <div style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border)', borderRadius: 10, padding: 20 }}>
-              <SkeletonBar width={200} height={14} />
-              <div style={{ marginTop: 8 }}><SkeletonBar width={280} height={10} /></div>
+          {loading ? (
+            <div style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border)', borderRadius: 8, padding: 20 }}>
+              <Skel w={200} h={14} /><div style={{ marginTop: 8 }}><Skel w={280} h={10} /></div>
             </div>
-          ) : libraryCount >= 3 ? (
-            /* Has enough items — show synthesis prompt */
-            <div style={{
-              background: 'var(--bg-elevated)', border: '0.5px solid var(--border)',
-              borderRadius: 10, padding: 16,
-            }}>
-              <div style={{ fontFamily: "'DM Serif Display', serif", fontStyle: 'italic', fontSize: 14, color: 'var(--text-primary)', marginBottom: 6 }}>
-                You have {libraryCount} research items ready to synthesise
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.5 }}>
-                Open the Canvas to connect your sources and generate content.
-              </div>
-              <Link href="/dashboard/canvas" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '7px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500,
-                cursor: 'pointer', border: 'none', background: 'var(--ember)',
-                color: '#fff', fontFamily: "'Inter', sans-serif", textDecoration: 'none',
-              }}>
-                Open Canvas →
-              </Link>
-            </div>
-          ) : (
-            /* Empty / not enough items — show onboarding prompt */
-            <div style={{
-              background: 'var(--bg-elevated)',
-              border: '1px dashed var(--border)',
-              borderRadius: 10, padding: 20, textAlign: 'center',
-            }}>
-              {/* BookOpen icon */}
-              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" style={{ margin: '0 auto 10px', display: 'block', opacity: 0.5 }}>
+          ) : libraryCount < 1 ? (
+            <div style={{ background: 'var(--bg-elevated)', border: '1px dashed var(--border)', borderRadius: 8, padding: 24, textAlign: 'center' }}>
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" style={{ margin: '0 auto 10px', display: 'block', opacity: 0.4 }}>
                 <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2V3zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7V3z"/>
               </svg>
-              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 6 }}>
-                Add research to get started
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 6 }}>Add research to get started</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 14, maxWidth: 280, margin: '0 auto 14px' }}>
+                Save articles to your library. Once you have 3+ sources, your agents will brainstorm content ideas.
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 14, maxWidth: 300, margin: '0 auto 14px' }}>
-                Save articles, PDFs, or notes to your library.
-                Once you have 3+ sources, the Canvas will suggest synthesis ideas.
-              </div>
-              <Link href="/dashboard/library" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '7px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500,
-                cursor: 'pointer', border: '0.5px solid var(--border)',
-                background: 'var(--bg-elevated)', color: 'var(--text-primary)',
-                fontFamily: "'Inter', sans-serif", textDecoration: 'none',
-              }}>
-                Add to library →
-              </Link>
+              <Link href="/dashboard/library/new" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 6, fontSize: 11, fontWeight: 500, border: '0.5px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', textDecoration: 'none' }}>Add to library →</Link>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+              {ideasLoading ? (
+                [0,1,2].map(i => <div key={i} style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border)', borderRadius: 6, padding: '9px 11px' }}><Skel w={220} h={12} /><div style={{ marginTop: 6 }}><Skel w={140} h={9} /></div></div>)
+              ) : ideas.length > 0 ? ideas.map((idea, i) => (
+                <div key={i} style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border)', borderRadius: 6, padding: '9px 11px' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-primary)', lineHeight: 1.45 }}>{idea.title}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 5 }}>
+                    <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{idea.sourceCount} sources · {idea.agent === 'authority' ? 'The Authority' : 'The Catalyst'}</span>
+                    <Link href="/dashboard/canvas" style={{ marginLeft: 'auto', fontSize: 9, color: 'var(--ember)', textDecoration: 'none' }}>Open in Canvas →</Link>
+                  </div>
+                </div>
+              )) : (
+                <div style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border)', borderRadius: 6, padding: 14 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-primary)', marginBottom: 6 }}>You have {libraryCount} research item{libraryCount > 1 ? 's' : ''} ready</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>Open the Canvas to connect your sources and generate content.</div>
+                  <Link href="/dashboard/canvas" style={{ display: 'inline-flex', padding: '5px 10px', borderRadius: 5, fontSize: 11, fontWeight: 500, background: 'var(--ember)', color: '#fff', textDecoration: 'none' }}>Open Canvas →</Link>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Right — Agents + Activity */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Agent status */}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>Agent status</div>
-
-            {/* The Authority — LinkedIn */}
-            <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: 18, marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 11 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 11, background: 'var(--ember-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="18" height="18" fill="none" viewBox="0 0 16 16" stroke="#FF6B35" strokeWidth="1.5" strokeLinecap="round"><path d="M2 14 C2 9 5 3 12 2"/><path d="M6 14 C6 10 8.5 6 12 5"/><line x1="4" y1="1.5" x2="7" y2="14.5" stroke="#EDE8E0" strokeWidth="1.2"/></svg>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>The Authority</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                    LinkedIn · {postsLoading ? '...' : linkedinDrafts.length > 0 ? `${linkedinDrafts.length} draft${linkedinDrafts.length > 1 ? 's' : ''} pending` : 'No drafts'}
-                  </div>
-                </div>
-                {postsLoading ? (
-                  <SkeletonBar width={50} height={18} />
-                ) : linkedinDrafts.length > 0 ? (
-                  <span style={{ display: 'inline-flex', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 20, background: 'rgba(239,159,39,0.1)', color: 'var(--warning)' }}>Awaiting</span>
-                ) : (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 20, background: 'var(--success-muted)', color: 'var(--success)', border: '0.5px solid rgba(29,158,117,0.2)' }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)' }}/>Ready
-                  </span>
-                )}
-              </div>
-              {linkedinDrafts.length > 0 ? (
-                <Link href="/dashboard/agents" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', width: '100%', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Review drafts →</Link>
-              ) : (
-                <Link href="/dashboard/canvas" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', width: '100%', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Generate from Canvas →</Link>
-              )}
-            </div>
-
-            {/* The Catalyst — X */}
-            <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: 18 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 11 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 11, background: 'rgba(55,138,221,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="18" height="18" fill="none" viewBox="0 0 16 16" stroke="#378ADD" strokeWidth="1.5" strokeLinecap="round"><path d="M2 14 C2 9 5 3 12 2"/><path d="M6 14 C6 10 8.5 6 12 5"/><line x1="4" y1="1.5" x2="7" y2="14.5" stroke="#EDE8E0" strokeWidth="1.2"/></svg>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>The Catalyst</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                    X/Twitter · {postsLoading ? '...' : xDrafts.length > 0 ? `${xDrafts.length} draft${xDrafts.length > 1 ? 's' : ''} pending` : 'No drafts'}
-                  </div>
-                </div>
-                {postsLoading ? (
-                  <SkeletonBar width={50} height={18} />
-                ) : xDrafts.length > 0 ? (
-                  <span style={{ display: 'inline-flex', fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 20, background: 'rgba(239,159,39,0.1)', color: 'var(--warning)' }}>Awaiting</span>
-                ) : (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontFamily: "'JetBrains Mono', monospace", fontSize: 9, padding: '2px 7px', borderRadius: 20, background: 'var(--success-muted)', color: 'var(--success)', border: '0.5px solid rgba(29,158,117,0.2)' }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)' }}/>Ready
-                  </span>
-                )}
-              </div>
-              {xDrafts.length > 0 ? (
-                <Link href="/dashboard/agents" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', width: '100%', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Review drafts →</Link>
-              ) : (
-                <Link href="/dashboard/canvas" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 10px', borderRadius: 7, fontSize: 11, fontWeight: 500, cursor: 'pointer', border: '0.5px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', width: '100%', fontFamily: "'Inter', sans-serif", textDecoration: 'none' }}>Generate from Canvas →</Link>
-              )}
-            </div>
+            <div style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Inter', sans-serif" }}>Agent status</div>
+            <AgentCard
+              name="The Authority" platform="LinkedIn · E-LI-772"
+              avatarBg="rgba(255,107,53,0.15)" avatarColor="var(--ember)"
+              drafts={linkedinDrafts.length} loading={loading}
+            />
+            <div style={{ height: 8 }} />
+            <AgentCard
+              name="The Catalyst" platform="X/Twitter · E-TW-119"
+              avatarBg="rgba(29,158,117,0.15)" avatarColor="var(--success)"
+              drafts={xDrafts.length} loading={loading}
+            />
           </div>
 
-          {/* Recent Activity */}
+          {/* Recent activity */}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>Recent activity</div>
-            <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 12, padding: 18 }}>
-              {postsLoading ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <SkeletonBar width={260} height={12} />
-                  <SkeletonBar width={200} height={12} />
-                </div>
-              ) : publishedPosts.length > 0 ? (
-                /* Show up to 3 most recent published posts */
-                publishedPosts.slice(0, 3).map((post: { _id: string; body: string; platform: string; publishedAt?: number }, i: number) => (
-                  <div key={post._id} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: '9px 0', borderBottom: i < Math.min(publishedPosts.length, 3) - 1 ? '0.5px solid var(--border)' : 'none' }}>
-                    <div style={{ width: 26, height: 26, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'var(--success-muted)' }}>
-                      <svg width="12" height="12" fill="none" viewBox="0 0 13 13" stroke="var(--success)" strokeWidth="1.5"><circle cx="6.5" cy="6.5" r="5"/><path d="M4 6.5l2 2 3-3"/></svg>
+            <div style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: 10, fontFamily: "'Inter', sans-serif" }}>Recent activity</div>
+            <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 8, padding: 14 }}>
+              {loading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}><Skel w={240} h={11} /><Skel w={180} h={11} /></div>
+              ) : activities.length > 0 ? (
+                activities.slice(0, 5).map((a, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '7px 0', borderBottom: i < Math.min(activities.length, 5) - 1 ? '0.5px solid var(--border)' : 'none' }}>
+                    <div style={{ width: 22, height: 22, borderRadius: 5, background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="10" height="10" fill="none" viewBox="0 0 12 12" stroke="var(--ember)" strokeWidth="1.5" strokeLinecap="round">
+                        {a.icon === 'bolt' && <path d="M6.5 1L3 7h3l-.5 4L10 5H7l.5-4z"/>}
+                        {a.icon === 'check' && <><circle cx="6" cy="6" r="4.5"/><path d="M4 6l1.5 1.5L8 4.5"/></>}
+                        {a.icon === 'cal' && <><rect x="1" y="2" width="10" height="8.5" rx="1.5"/><line x1="1" y1="5" x2="11" y2="5"/></>}
+                        {a.icon === 'plus' && <><line x1="6" y1="2" x2="6" y2="10"/><line x1="2" y1="6" x2="10" y2="6"/></>}
+                      </svg>
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, flex: 1 }}>
-                      <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Post published</strong> — &quot;{post.body.length > 60 ? post.body.slice(0, 60) + '...' : post.body}&quot; on {post.platform === 'linkedin' ? 'LinkedIn' : 'X'}
-                    </div>
-                    {post.publishedAt && (
-                      <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'var(--text-faint)' }}>
-                        {formatRelativeTime(post.publishedAt)}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.45 }}>
+                        <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{a.bold}</strong>{a.text}
                       </div>
-                    )}
+                      <div style={{ fontSize: 9, color: 'var(--text-faint)', marginTop: 2 }}>{timeAgo(a.time)}</div>
+                    </div>
                   </div>
                 ))
               ) : (
-                /* Empty state */
-                <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '4px 0' }}>
-                  <div style={{ width: 26, height: 26, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'var(--bg-elevated)' }}>
-                    {/* Zap icon */}
-                    <svg width="12" height="12" fill="none" viewBox="0 0 13 13" stroke="var(--text-faint)" strokeWidth="1.5" strokeLinecap="round"><path d="M7 1L3 7.5h3.5L5.5 12 10 5.5H6.5L7 1z"/></svg>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 22, height: 22, borderRadius: 5, background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="10" height="10" fill="none" viewBox="0 0 12 12" stroke="var(--text-faint)" strokeWidth="1.5" strokeLinecap="round"><path d="M6.5 1L3 7h3l-.5 4L10 5H7l.5-4z"/></svg>
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                    Your activity will appear here once you start publishing.
-                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>Your activity will appear as you start using Threadda.</div>
                 </div>
               )}
             </div>
@@ -314,8 +199,55 @@ export default function DashboardHome() {
       <style jsx>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .btn-sec:hover { border-color: var(--border-hover) !important; background: var(--bg-hover) !important; }
       `}</style>
+    </div>
+  )
+}
+
+/* ─── Stat Card ─── */
+function StatCard({ label, value, sub }: { label: string; value: string | null; sub?: string }) {
+  return (
+    <div style={{ background: 'var(--bg-surface)', border: '0.5px solid var(--border)', borderRadius: 8, padding: '12px 14px' }}>
+      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>{label}</div>
+      {value === null ? <Skel w={36} h={22} /> : (
+        <div style={{ fontSize: 22, fontWeight: 500, color: value === '0' || value === '—' ? 'var(--text-faint)' : 'var(--ember)', lineHeight: 1 }}>{value}</div>
+      )}
+      {sub && <div style={{ fontSize: 9, color: 'var(--text-faint)', marginTop: 4, lineHeight: 1.4 }}>{sub}</div>}
+    </div>
+  )
+}
+
+/* ─── Agent Card ─── */
+function AgentCard({ name, platform, avatarBg, avatarColor, drafts, loading }: {
+  name: string; platform: string; avatarBg: string; avatarColor: string; drafts: number; loading: boolean
+}) {
+  return (
+    <div style={{ background: 'var(--bg-elevated)', border: '0.5px solid var(--border)', borderRadius: 6, padding: '9px 11px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 8 }}>
+        <div style={{ width: 26, height: 26, borderRadius: 6, background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="12" height="12" fill="none" viewBox="0 0 14 14" stroke={avatarColor} strokeWidth="1.5" strokeLinecap="round"><path d="M7 1v3M4 5l2.5 2M10 5l-2.5 2M7 7v4"/></svg>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>{name}</div>
+          <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>{platform}</div>
+        </div>
+        {loading ? <Skel w={44} h={16} /> : drafts > 0 ? (
+          <span style={{ fontSize: 9, fontFamily: "'JetBrains Mono', monospace", padding: '2px 6px', borderRadius: 10, background: 'rgba(239,159,39,0.1)', color: '#EF9F27' }}>Awaiting</span>
+        ) : (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9, fontFamily: "'JetBrains Mono', monospace", padding: '2px 6px', borderRadius: 10, background: 'var(--success-muted)', color: 'var(--success)' }}>
+            <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--success)' }} />Ready
+          </span>
+        )}
+      </div>
+      {drafts > 0 ? (
+        <Link href="/dashboard/agents" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 8px', borderRadius: 4, fontSize: 10, fontWeight: 500, border: '0.5px solid rgba(255,107,53,0.2)', color: 'var(--ember)', textDecoration: 'none' }}>
+          Review {drafts} draft{drafts > 1 ? 's' : ''} →
+        </Link>
+      ) : (
+        <Link href="/dashboard/canvas" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 8px', borderRadius: 4, fontSize: 10, fontWeight: 500, border: '0.5px solid var(--border)', color: 'var(--text-muted)', textDecoration: 'none' }}>
+          Generate from Canvas →
+        </Link>
+      )}
     </div>
   )
 }

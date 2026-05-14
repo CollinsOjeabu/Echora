@@ -7,7 +7,7 @@ const isAuthRoute   = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth()
-  const isOnboarded = req.cookies.get('echora-onboarded')?.value === 'true'
+  const isOnboarded = req.cookies.get(`threadda-onboarded-${userId}`)?.value === 'true'
 
   // Unauthenticated → sign-in
   if (!userId && isProtected(req)) {

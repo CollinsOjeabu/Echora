@@ -162,7 +162,7 @@ export default function NewContentPage() {
                 />
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.5 }}>
-                Echora will scrape the article, generate an AI summary, and create embeddings for search.
+                Threadda will scrape the article, generate an AI summary, and create embeddings for search.
               </div>
 
               {/* Error */}
