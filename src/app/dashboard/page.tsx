@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useQuery } from 'convex/react'
 import { useAction } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
@@ -21,9 +22,11 @@ function timeAgo(ts: number): string {
 }
 
 export default function DashboardHome() {
+  const router = useRouter()
   const { profile, isLoading: userLoading } = useCurrentUser()
   const contentItems = useQuery(api.content.list, profile?._id ? { userId: profile._id } : 'skip')
   const agentPosts = useQuery(api.posts.list, profile?._id ? { userId: profile._id } : 'skip')
+  const graphEdgeCount = useQuery(api.graphEdges.getCountForUser, {})
 
   // Content ideas
   const [ideas, setIdeas] = useState<Array<{ title: string; sourceCount: number; agent: string; sourceIds: string[] }>>([])
@@ -83,7 +86,7 @@ export default function DashboardHome() {
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 18 }}>
         <StatCard label="Library items" value={loading ? null : String(libraryCount)} />
-        <StatCard label="Graph connections" value={loading ? null : '0'} sub="Builds as your library grows" />
+        <StatCard label="Graph connections" value={loading ? null : String(graphEdgeCount ?? 0)} sub="Builds as your library grows" />
         <StatCard label="Posts published" value={loading ? null : String(publishedPosts.length)} />
         <StatCard label="Avg voice match" value={loading ? null : avgVoice !== null ? `${avgVoice}%` : '—'} sub={avgVoice === null ? 'Train your voice to see this' : undefined} />
       </div>
@@ -126,7 +129,16 @@ export default function DashboardHome() {
                   <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.45 }}>{idea.title}</div>
                   <div style={{ display: 'flex', alignItems: 'center', marginTop: 5 }}>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{idea.sourceCount} sources · {idea.agent === 'authority' ? 'The Authority' : 'The Catalyst'}</span>
-                    <Link href="/dashboard/canvas" style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--ember)', textDecoration: 'none' }}>Open in Canvas →</Link>
+                    <span
+                      onClick={() => {
+                        const params = new URLSearchParams({
+                          idea: idea.title,
+                          agent: idea.agent || 'authority',
+                        })
+                        router.push(`/dashboard/canvas?${params.toString()}`)
+                      }}
+                      style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--ember)', textDecoration: 'none', cursor: 'pointer' }}
+                    >Open in Canvas →</span>
                   </div>
                 </div>
               )) : (

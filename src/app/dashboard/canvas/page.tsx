@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useQuery, useMutation, useAction } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
@@ -15,8 +16,20 @@ import { PostPreview } from '@/components/canvas/PostPreview'
 /* ─── State type ─── */
 type CanvasState = 'constellation' | 'session' | 'post-preview'
 
-/* ─── Main Page ─── */
+/* ─── Main Page (wrapped in Suspense for useSearchParams) ─── */
 export default function CanvasPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'var(--bg-page)' }}>
+        <div className="text-body" style={{ color: 'var(--text-muted)' }}>Loading canvas...</div>
+      </div>
+    }>
+      <CanvasPageInner />
+    </Suspense>
+  )
+}
+
+function CanvasPageInner() {
   const { profile, isLoading: userLoading } = useCurrentUser()
   const userId = profile?._id
 
@@ -33,6 +46,18 @@ export default function CanvasPage() {
   /* ─── Chat state ─── */
   const [chatMessages, setChatMessages] = useState<Array<{ role: 'user' | 'agent' | 'system'; content: string }>>([])
   const [isGenerating, setIsGenerating] = useState(false)
+
+  /* ─── Prefilled idea from Home page ─── */
+  const searchParams = useSearchParams()
+  const [prefilledIdea, setPrefilledIdea] = useState<string | null>(null)
+
+  useEffect(() => {
+    const ideaParam = searchParams.get('idea')
+    const agentParam = searchParams.get('agent')
+    if (!ideaParam) return
+    setActiveAgent(agentParam === 'catalyst' ? 'catalyst' : 'authority')
+    setPrefilledIdea(ideaParam)
+  }, [searchParams])
 
   /* ─── Convex queries ─── */
   const contentItems = useQuery(
@@ -345,6 +370,29 @@ export default function CanvasPage() {
           </div>
         )}
       </div>
+
+      {/* ─── Prefilled idea banner ─── */}
+      {prefilledIdea && (
+        <div style={{
+          padding: '8px 16px',
+          background: 'var(--ember-muted)',
+          borderBottom: '0.5px solid var(--border)',
+          fontSize: 12,
+          color: 'var(--ember)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+        }}>
+          <span>💡 Idea: {prefilledIdea}</span>
+          <button
+            onClick={() => setPrefilledIdea(null)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 11 }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* ─── Three-panel layout ─── */}
       <CanvasShell

@@ -4,6 +4,30 @@ import { normalizeOrderedPair } from "./lib/similarity"
 import type { Id } from "./_generated/dataModel"
 
 /**
+ * Return the total number of graph edges for the authenticated user.
+ * Lightweight query — used by the dashboard stat card.
+ */
+export const getCountForUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return 0
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first()
+    if (!profile) return 0
+
+    const edges = await ctx.db
+      .query("graphEdges")
+      .withIndex("by_user", (q) => q.eq("userId", profile._id))
+      .collect()
+    return edges.length
+  },
+})
+
+/**
  * Upsert a graph edge between two content items.
  * Idempotent: uses canonical (sourceA, sourceB) ordering so (A,B) and (B,A)
  * resolve to the same row. If the edge exists, it is updated with the new
